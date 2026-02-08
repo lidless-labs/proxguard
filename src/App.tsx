@@ -1,32 +1,52 @@
 /**
  * ProxGuard — Main App Layout
- * Routes, header, footer, and navigation shell.
+ * Routes, header with variant selector, footer, and navigation shell.
+ * Wrapped in ThemeProvider for variant-aware styling.
  */
 import { Routes, Route, NavLink } from 'react-router-dom';
 import { Shield, History, Lock } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { AuditPage } from './components/AuditPage';
 import { HistoryPage } from './components/HistoryPage';
+import { VariantSelector } from './components/VariantSelector';
+import { ThemeProvider, useTheme } from './variants/ThemeProvider';
 
-export default function App() {
+// ─── Inner Shell (needs theme context) ──────────────────────────────────────
+
+function AppShell() {
+  const theme = useTheme();
+
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
+    <motion.div
+      className={`min-h-screen ${theme.classes.bg} ${theme.classes.body} flex flex-col transition-colors duration-300`}
+      style={{ fontFamily: theme.fonts.body }}
+    >
       {/* ─── Header ──────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800/60">
+      <header className={`sticky top-0 z-50 ${theme.classes.header}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo / Brand */}
           <NavLink to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-lg bg-emerald-500/15 flex items-center justify-center group-hover:bg-emerald-500/25 transition-colors">
-              <Shield className="w-5 h-5 text-emerald-400" />
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors`}
+              style={{ background: `${theme.vars['--pg-accent']}22` }}
+            >
+              <Shield className={`w-5 h-5 ${theme.classes.accent}`} />
             </div>
             <div className="flex flex-col leading-tight">
-              <span className="text-lg font-bold text-gray-100 tracking-tight">
-                Prox<span className="text-emerald-400">Guard</span>
+              <span className={`text-lg font-bold ${theme.classes.textPrimary} tracking-tight`}
+                style={{ fontFamily: theme.fonts.heading }}
+              >
+                Prox<span className={theme.classes.accent}>Guard</span>
               </span>
-              <span className="text-[10px] text-gray-500 uppercase tracking-widest -mt-0.5">
+              <span className={`text-[10px] ${theme.classes.textSecondary} uppercase tracking-widest -mt-0.5`}>
                 Security Auditor
               </span>
             </div>
           </NavLink>
+
+          {/* Center: Variant Selector */}
+          <div className="hidden sm:flex">
+            <VariantSelector />
+          </div>
 
           {/* Navigation */}
           <nav className="flex items-center gap-1">
@@ -35,9 +55,7 @@ export default function App() {
               end
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-gray-800 text-gray-100'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                  isActive ? theme.classes.navActive : theme.classes.navInactive
                 }`
               }
             >
@@ -48,9 +66,7 @@ export default function App() {
               to="/history"
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-gray-800 text-gray-100'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                  isActive ? theme.classes.navActive : theme.classes.navInactive
                 }`
               }
             >
@@ -58,6 +74,11 @@ export default function App() {
               <span className="hidden sm:inline">History</span>
             </NavLink>
           </nav>
+        </div>
+
+        {/* Mobile variant selector */}
+        <div className="sm:hidden flex justify-center pb-2">
+          <VariantSelector />
         </div>
       </header>
 
@@ -70,17 +91,27 @@ export default function App() {
       </main>
 
       {/* ─── Footer ──────────────────────────────────────────────── */}
-      <footer className="border-t border-gray-800/60 py-4">
+      <footer className={`${theme.classes.footer} py-4`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Lock className="w-3.5 h-3.5 text-emerald-500/70" />
+          <div className={`flex items-center gap-2 text-xs ${theme.classes.textSecondary}`}>
+            <Lock className={`w-3.5 h-3.5 ${theme.classes.accent} opacity-70`} />
             <span>100% client-side — your configs never leave your browser</span>
           </div>
-          <div className="text-xs text-gray-600">
-            ProxGuard v0.1.0 • Proxmox Security Auditor
+          <div className={`text-xs ${theme.classes.textSecondary} opacity-60`}>
+            ProxGuard v0.1.0 • {theme.name} theme
           </div>
         </div>
       </footer>
-    </div>
+    </motion.div>
+  );
+}
+
+// ─── Root App (wraps ThemeProvider) ─────────────────────────────────────────
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppShell />
+    </ThemeProvider>
   );
 }

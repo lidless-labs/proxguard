@@ -1,31 +1,25 @@
 /**
  * AnimatedGauge — Circular SVG gauge with animated score.
- * Transitions through red→orange→yellow→green based on score.
- * Shows grade letter in center.
+ * Theme-aware: uses theme gauge colors, glow, and track overrides.
  */
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { useTheme } from '../variants/ThemeProvider';
 import type { Grade } from '../types';
 
-/** Map score to a hex color on the red→orange→yellow→green gradient */
+/** Default score→color mapping (used when theme has no colorOverride) */
 function scoreToColor(score: number): string {
-  if (score >= 90) return '#10b981'; // emerald-500
-  if (score >= 80) return '#22c55e'; // green-500
-  if (score >= 70) return '#eab308'; // yellow-500
-  if (score >= 60) return '#f97316'; // orange-500
-  return '#ef4444'; // red-500
+  if (score >= 90) return '#10b981';
+  if (score >= 80) return '#22c55e';
+  if (score >= 70) return '#eab308';
+  if (score >= 60) return '#f97316';
+  return '#ef4444';
 }
 
-/** Map grade to glow color class */
-function gradeGlow(grade: Grade): string {
-  const map: Record<Grade, string> = {
-    A: 'drop-shadow(0 0 20px rgba(16,185,129,0.4))',
-    B: 'drop-shadow(0 0 20px rgba(34,197,94,0.4))',
-    C: 'drop-shadow(0 0 20px rgba(234,179,8,0.3))',
-    D: 'drop-shadow(0 0 20px rgba(249,115,22,0.3))',
-    F: 'drop-shadow(0 0 20px rgba(239,68,68,0.4))',
-  };
-  return map[grade];
+/** Glow filter based on the gauge color */
+function makeGlow(color: string, enabled: boolean): string {
+  if (!enabled) return 'none';
+  return `drop-shadow(0 0 20px ${color}66)`;
 }
 
 interface AnimatedGaugeProps {
@@ -37,6 +31,7 @@ interface AnimatedGaugeProps {
 export function AnimatedGauge({ score, grade, size = 200 }: AnimatedGaugeProps) {
   const [displayScore, setDisplayScore] = useState(0);
   const motionScore = useMotionValue(0);
+  const theme = useTheme();
 
   // SVG circle math
   const strokeWidth = 12;
@@ -55,13 +50,10 @@ export function AnimatedGauge({ score, grade, size = 200 }: AnimatedGaugeProps) 
   }, [score, motionScore]);
 
   // Derive stroke dashoffset from motionScore
-  const dashOffset = useTransform(
-    motionScore,
-    [0, 100],
-    [circumference, 0]
-  );
+  const dashOffset = useTransform(motionScore, [0, 100], [circumference, 0]);
 
-  const color = scoreToColor(score);
+  // Theme-aware color
+  const color = theme.gauge.colorOverride ?? scoreToColor(score);
 
   return (
     <motion.div
@@ -69,7 +61,11 @@ export function AnimatedGauge({ score, grade, size = 200 }: AnimatedGaugeProps) 
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.1 }}
       className="relative inline-flex items-center justify-center"
-      style={{ width: size, height: size, filter: gradeGlow(grade) }}
+      style={{
+        width: size,
+        height: size,
+        filter: makeGlow(color, theme.gauge.glow),
+      }}
     >
       <svg width={size} height={size} className="-rotate-90">
         {/* Background track */}
@@ -77,10 +73,9 @@ export function AnimatedGauge({ score, grade, size = 200 }: AnimatedGaugeProps) 
           cx={center}
           cy={center}
           r={radius}
-          stroke="currentColor"
+          stroke={theme.gauge.track}
           strokeWidth={strokeWidth}
           fill="none"
-          className="text-gray-800"
         />
         {/* Animated foreground arc */}
         <motion.circle
@@ -103,12 +98,12 @@ export function AnimatedGauge({ score, grade, size = 200 }: AnimatedGaugeProps) 
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.5 }}
           className="text-5xl font-black"
-          style={{ color }}
+          style={{ color, fontFamily: theme.fonts.heading }}
         >
           {grade}
         </motion.span>
-        <span className="text-lg font-bold text-gray-300 tabular-nums">
-          {displayScore}<span className="text-gray-500 text-sm">/100</span>
+        <span className={`text-lg font-bold ${theme.classes.textPrimary} tabular-nums`}>
+          {displayScore}<span className={`${theme.classes.textSecondary} text-sm`}>/100</span>
         </span>
       </div>
     </motion.div>

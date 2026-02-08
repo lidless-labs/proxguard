@@ -1,6 +1,7 @@
 /**
  * Large color-coded grade badge component.
  * Displays the overall security grade (A-F) with appropriate coloring.
+ * Uses universal severity colors (works across all themes).
  */
 import { motion } from 'framer-motion';
 import type { Grade } from '../types';

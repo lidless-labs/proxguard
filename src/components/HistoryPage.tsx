@@ -1,13 +1,14 @@
 /**
  * HistoryPage — Past audit results from localStorage.
- * Shows timestamp, grade, score, and delete controls.
+ * Theme-aware: uses active theme for all styling.
  */
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Clock, Award, History, ShieldOff } from 'lucide-react';
 import { useAuditStore } from '../store/auditStore';
+import { useTheme } from '../variants/ThemeProvider';
 import type { Grade } from '../types';
 
-/** Grade color mapping */
+/** Grade color mapping (universal — works on any bg) */
 const gradeColors: Record<Grade, string> = {
   A: 'text-emerald-400 bg-emerald-500/15',
   B: 'text-green-400 bg-green-500/15',
@@ -19,6 +20,7 @@ const gradeColors: Record<Grade, string> = {
 export function HistoryPage() {
   const history = useAuditStore((s) => s.history);
   const clearHistory = useAuditStore((s) => s.clearHistory);
+  const theme = useTheme();
 
   /** Delete a single history entry by timestamp */
   const deleteEntry = (timestamp: number) => {
@@ -32,12 +34,16 @@ export function HistoryPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
-            <History className="w-5 h-5 text-gray-400" />
+          <div className={`w-10 h-10 rounded-lg ${theme.classes.card} border ${theme.classes.cardBorder} flex items-center justify-center`}>
+            <History className={`w-5 h-5 ${theme.classes.textSecondary}`} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-100">Audit History</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className={`text-xl font-bold ${theme.classes.textPrimary}`}
+              style={{ fontFamily: theme.fonts.heading }}
+            >
+              Audit History
+            </h1>
+            <p className={`text-sm ${theme.classes.textSecondary}`}>
               {history.length} audit{history.length !== 1 ? 's' : ''} recorded
             </p>
           </div>
@@ -61,9 +67,13 @@ export function HistoryPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center py-20"
         >
-          <ShieldOff className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-gray-400 mb-2">No audits yet</h2>
-          <p className="text-sm text-gray-500 max-w-sm mx-auto">
+          <ShieldOff className={`w-16 h-16 ${theme.classes.textSecondary} opacity-30 mx-auto mb-4`} />
+          <h2 className={`text-lg font-semibold ${theme.classes.textSecondary} mb-2`}
+            style={{ fontFamily: theme.fonts.heading }}
+          >
+            No audits yet
+          </h2>
+          <p className={`text-sm ${theme.classes.textSecondary} max-w-sm mx-auto opacity-70`}>
             Run your first security audit from the main page. Results will be saved here
             automatically for comparison.
           </p>
@@ -90,7 +100,7 @@ export function HistoryPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ delay: i * 0.05 }}
-                className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 flex items-center justify-between gap-4"
+                className={`${theme.classes.card} border ${theme.classes.cardBorder} rounded-xl p-4 flex items-center justify-between gap-4`}
               >
                 <div className="flex items-center gap-4 min-w-0">
                   {/* Grade badge */}
@@ -105,14 +115,14 @@ export function HistoryPage() {
                   {/* Details */}
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <Award className="w-4 h-4 text-gray-500 shrink-0" />
-                      <span className="text-sm font-semibold text-gray-200">
+                      <Award className={`w-4 h-4 ${theme.classes.textSecondary} shrink-0`} />
+                      <span className={`text-sm font-semibold ${theme.classes.textPrimary}`}>
                         Score: {entry.overallScore}/100
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <Clock className="w-3.5 h-3.5 text-gray-600 shrink-0" />
-                      <span className="text-xs text-gray-500 truncate">{formatted}</span>
+                      <Clock className={`w-3.5 h-3.5 ${theme.classes.textSecondary} shrink-0`} />
+                      <span className={`text-xs ${theme.classes.textSecondary} truncate`}>{formatted}</span>
                     </div>
                   </div>
                 </div>

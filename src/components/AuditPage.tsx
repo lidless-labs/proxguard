@@ -1,7 +1,7 @@
 /**
  * AuditPage — Primary audit interface.
  * Two-panel layout: config input (left) + results (right).
- * Responsive: side-by-side on desktop, stacked on mobile.
+ * Theme-aware with ScriptGenerator and PDF export.
  */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,12 +14,15 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { useAuditStore } from '../store/auditStore';
+import { useTheme } from '../variants/ThemeProvider';
 import type { ConfigFileType, AuditCategory } from '../types';
 import { AnimatedGauge } from './AnimatedGauge';
 import { CategoryRadar } from './CategoryRadar';
 import { CategoryCard } from './CategoryCard';
 import { FindingCard } from './FindingCard';
 import { ScoreSummary } from './ScoreSummary';
+import { ScriptGenerator } from './ScriptGenerator';
+import { ExportButton } from './ExportButton';
 
 // ─── Config tab definitions ─────────────────────────────────────────────────
 
@@ -120,6 +123,7 @@ const CATEGORY_LABELS: Record<AuditCategory, string> = {
 export function AuditPage() {
   const [activeTab, setActiveTab] = useState<ConfigFileType>('sshd_config');
   const [inputCollapsed, setInputCollapsed] = useState(false);
+  const theme = useTheme();
 
   const configInputs = useAuditStore((s) => s.configInputs);
   const setConfigInput = useAuditStore((s) => s.setConfigInput);
@@ -139,18 +143,22 @@ export function AuditPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* ─── Left Panel: Config Input ────────────────────────── */}
         <div className={`${auditReport ? 'lg:w-[380px] lg:shrink-0' : 'lg:w-1/2'} transition-all`}>
-          <div className="bg-gray-900/50 border border-gray-800/60 rounded-2xl overflow-hidden">
+          <div className={`${theme.classes.card} border ${theme.classes.cardBorder} rounded-2xl overflow-hidden`}>
             {/* Panel header */}
-            <div className="px-4 py-3 border-b border-gray-800/60 flex items-center justify-between">
+            <div className={`px-4 py-3 border-b ${theme.classes.cardBorder} flex items-center justify-between`}>
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-semibold text-gray-300">Config Input</span>
+                <FileText className={`w-4 h-4 ${theme.classes.textSecondary}`} />
+                <span className={`text-sm font-semibold ${theme.classes.textPrimary}`}
+                  style={{ fontFamily: theme.fonts.heading }}
+                >
+                  Config Input
+                </span>
               </div>
               {/* Collapse toggle (visible when results shown, on mobile always visible) */}
               {auditReport && (
                 <button
                   onClick={() => setInputCollapsed(!inputCollapsed)}
-                  className="lg:hidden flex items-center gap-1 text-xs text-gray-500 hover:text-gray-300"
+                  className={`lg:hidden flex items-center gap-1 text-xs ${theme.classes.textSecondary} hover:opacity-80`}
                 >
                   {inputCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                   {inputCollapsed ? 'Expand' : 'Collapse'}
@@ -169,7 +177,7 @@ export function AuditPage() {
                 >
                   {/* Sample buttons */}
                   <div className="px-4 pt-3 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-gray-500 mr-1">Load Sample:</span>
+                    <span className={`text-xs ${theme.classes.textSecondary} mr-1`}>Load Sample:</span>
                     <button
                       onClick={() => loadSample('insecure')}
                       className="px-2.5 py-1 text-xs font-medium rounded-md bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors"
@@ -198,14 +206,15 @@ export function AuditPage() {
                         onClick={() => setActiveTab(tab.key)}
                         className={`relative px-3 py-1.5 text-xs font-medium rounded-t-lg whitespace-nowrap transition-colors ${
                           activeTab === tab.key
-                            ? 'bg-gray-800 text-gray-100'
-                            : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'
+                            ? theme.classes.tabActive
+                            : theme.classes.tabInactive
                         }`}
+                        style={{ fontFamily: theme.fonts.mono }}
                       >
                         {tab.label}
                         {/* Content indicator dot */}
                         {hasContent(tab.key) && (
-                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+                          <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ${theme.classes.indicator}`} />
                         )}
                       </button>
                     ))}
@@ -218,7 +227,8 @@ export function AuditPage() {
                       onChange={(e) => setConfigInput(activeTab, e.target.value)}
                       placeholder={CONFIG_TABS.find((t) => t.key === activeTab)?.placeholder}
                       spellCheck={false}
-                      className="w-full h-56 sm:h-64 bg-gray-950/60 border border-gray-800/60 rounded-lg p-3 text-sm font-mono text-gray-300 placeholder-gray-600 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-colors"
+                      className={`w-full h-56 sm:h-64 border rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-1 transition-colors ${theme.classes.input}`}
+                      style={{ fontFamily: theme.fonts.mono }}
                     />
                   </div>
 
@@ -231,9 +241,10 @@ export function AuditPage() {
                       whileTap={{ scale: 0.98 }}
                       className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-colors ${
                         isAuditing || !hasAnyContent
-                          ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                          : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+                          ? theme.classes.buttonDisabled
+                          : theme.classes.button
                       }`}
+                      style={{ fontFamily: theme.fonts.heading }}
                     >
                       {isAuditing ? (
                         <>
@@ -266,13 +277,19 @@ export function AuditPage() {
                 exit={{ opacity: 0 }}
                 className="flex flex-col items-center justify-center text-center py-20"
               >
-                <div className="w-20 h-20 rounded-2xl bg-gray-800/50 flex items-center justify-center mb-4">
-                  <AlertTriangle className="w-10 h-10 text-gray-700" />
+                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4`}
+                  style={{ background: `${theme.vars['--pg-accent']}11` }}
+                >
+                  <AlertTriangle className={`w-10 h-10 ${theme.classes.textSecondary} opacity-50`} />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-500 mb-2">No audit results yet</h2>
-                <p className="text-sm text-gray-600 max-w-sm">
+                <h2 className={`text-lg font-semibold ${theme.classes.textSecondary} mb-2`}
+                  style={{ fontFamily: theme.fonts.heading }}
+                >
+                  No audit results yet
+                </h2>
+                <p className={`text-sm ${theme.classes.textSecondary} max-w-sm opacity-70`}>
                   Paste your Proxmox config files or load a sample, then click{' '}
-                  <span className="text-emerald-500 font-medium">Run Audit</span> to see your
+                  <span className={`${theme.classes.accent} font-medium`}>Run Audit</span> to see your
                   security score.
                 </p>
               </motion.div>
@@ -285,56 +302,72 @@ export function AuditPage() {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                {/* Grade Hero + Radar side by side */}
-                <div className="bg-gray-900/50 border border-gray-800/60 rounded-2xl p-6">
-                  <div className="flex flex-col sm:flex-row items-center gap-6">
-                    <AnimatedGauge
-                      score={auditReport.overallScore}
-                      grade={auditReport.overallGrade}
-                      size={180}
-                    />
-                    <div className="flex-1 w-full">
-                      <CategoryRadar categories={auditReport.categories} />
+                {/* Export button row */}
+                <div className="flex justify-end">
+                  <ExportButton
+                    report={auditReport}
+                    resultsContainerId="proxguard-results"
+                  />
+                </div>
+
+                {/* Capturable results container */}
+                <div id="proxguard-results" className="space-y-6">
+                  {/* Grade Hero + Radar side by side */}
+                  <div className={`${theme.classes.card} border ${theme.classes.cardBorder} rounded-2xl p-6`}>
+                    <div className="flex flex-col sm:flex-row items-center gap-6">
+                      <AnimatedGauge
+                        score={auditReport.overallScore}
+                        grade={auditReport.overallGrade}
+                        size={180}
+                      />
+                      <div className="flex-1 w-full">
+                        <CategoryRadar categories={auditReport.categories} />
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Summary Stats */}
+                  <ScoreSummary findings={auditReport.findings} />
+
+                  {/* Category Cards Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {auditReport.categories.map((cat, i) => (
+                      <CategoryCard key={cat.category} categoryScore={cat} index={i} />
+                    ))}
+                  </div>
+
+                  {/* Findings by Category */}
+                  <div className="space-y-6">
+                    {auditReport.categories.map((cat) => {
+                      const sortedFindings = [...cat.findings].sort(
+                        (a, b) => SEVERITY_ORDER[a.rule.severity] - SEVERITY_ORDER[b.rule.severity]
+                      );
+
+                      if (sortedFindings.length === 0) return null;
+
+                      return (
+                        <div key={cat.category}>
+                          <h3 className={`text-sm font-semibold ${theme.classes.textSecondary} uppercase tracking-wider mb-3`}
+                            style={{ fontFamily: theme.fonts.heading }}
+                          >
+                            {CATEGORY_LABELS[cat.category]}
+                            <span className={`ml-2 opacity-60`}>
+                              ({sortedFindings.filter((f) => !f.result.passed).length} issues)
+                            </span>
+                          </h3>
+                          <div className="space-y-2">
+                            {sortedFindings.map((finding) => (
+                              <FindingCard key={finding.rule.id} finding={finding} />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Summary Stats */}
-                <ScoreSummary findings={auditReport.findings} />
-
-                {/* Category Cards Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {auditReport.categories.map((cat, i) => (
-                    <CategoryCard key={cat.category} categoryScore={cat} index={i} />
-                  ))}
-                </div>
-
-                {/* Findings by Category */}
-                <div className="space-y-6">
-                  {auditReport.categories.map((cat) => {
-                    const sortedFindings = [...cat.findings].sort(
-                      (a, b) => SEVERITY_ORDER[a.rule.severity] - SEVERITY_ORDER[b.rule.severity]
-                    );
-
-                    if (sortedFindings.length === 0) return null;
-
-                    return (
-                      <div key={cat.category}>
-                        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                          {CATEGORY_LABELS[cat.category]}
-                          <span className="ml-2 text-gray-600">
-                            ({sortedFindings.filter((f) => !f.result.passed).length} issues)
-                          </span>
-                        </h3>
-                        <div className="space-y-2">
-                          {sortedFindings.map((finding) => (
-                            <FindingCard key={finding.rule.id} finding={finding} />
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                {/* Script Generator (outside capturable area) */}
+                <ScriptGenerator findings={auditReport.findings} />
               </motion.div>
             )}
           </AnimatePresence>

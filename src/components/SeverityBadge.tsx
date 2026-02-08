@@ -1,6 +1,7 @@
 /**
  * Severity badge component for findings.
- * Color-coded by severity level.
+ * Color-coded by severity level. Uses universal severity colors
+ * that work across all themes.
  */
 import type { Severity } from '../types';
 

@@ -1,6 +1,6 @@
 /**
  * ScoreSummary — Row of stat cards showing finding counts.
- * Total findings, critical/high/medium/info, pass rate.
+ * Theme-aware: reads card/text classes from the active variant.
  */
 import { motion } from 'framer-motion';
 import {
@@ -11,6 +11,7 @@ import {
   CheckCircle,
   BarChart3,
 } from 'lucide-react';
+import { useTheme } from '../variants/ThemeProvider';
 import type { Finding } from '../types';
 
 interface StatCardProps {
@@ -22,19 +23,21 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, icon, color, index }: StatCardProps) {
+  const theme = useTheme();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
-      className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-3 sm:p-4 flex items-center gap-3"
+      className={`${theme.classes.card} border ${theme.classes.cardBorder} rounded-xl p-3 sm:p-4 flex items-center gap-3`}
     >
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
         {icon}
       </div>
       <div>
-        <div className="text-xl font-bold text-gray-100 tabular-nums">{value}</div>
-        <div className="text-xs text-gray-400 whitespace-nowrap">{label}</div>
+        <div className={`text-xl font-bold ${theme.classes.textPrimary} tabular-nums`}>{value}</div>
+        <div className={`text-xs ${theme.classes.textSecondary} whitespace-nowrap`}>{label}</div>
       </div>
     </motion.div>
   );
