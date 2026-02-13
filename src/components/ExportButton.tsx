@@ -111,7 +111,6 @@ export function ExportButton({ report, resultsContainerId }: ExportButtonProps) 
           logging: false,
         });
 
-        const imgData = canvas.toDataURL('image/png');
         const imgWidth = pageWidth - margin * 2;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
