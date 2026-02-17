@@ -3,7 +3,7 @@
  * Two-panel layout: config input (left) + results (right).
  * Theme-aware with ScriptGenerator and PDF export.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
@@ -12,6 +12,8 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Upload,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAuditStore } from '../store/auditStore';
 import { useTheme } from '../variants/ThemeProvider';
@@ -30,6 +32,13 @@ interface ConfigTab {
   key: ConfigFileType;
   label: string;
   placeholder: string;
+}
+
+interface PendingUpload {
+  id: string;
+  name: string;
+  content: string;
+  selectedType: ConfigFileType;
 }
 
 const CONFIG_TABS: ConfigTab[] = [
@@ -118,12 +127,65 @@ const CATEGORY_LABELS: Record<AuditCategory, string> = {
   api: 'API Security',
 };
 
+function detectConfigType(filename: string, content: string): ConfigFileType | null {
+  const lowerName = filename.toLowerCase();
+  const lowerContent = content.toLowerCase();
+
+  if (
+    lowerName.includes('sshd') ||
+    /^\s*(port|permitrootlogin|passwordauthentication|pubkeyauthentication|maxauthtries|x11forwarding|usepam)\s+/im.test(content)
+  ) {
+    return 'sshd_config';
+  }
+
+  if (
+    lowerName.includes('user.cfg') ||
+    /^\s*(user|acl|group):/im.test(content)
+  ) {
+    return 'user.cfg';
+  }
+
+  if (
+    lowerName.includes('cluster.fw') ||
+    (lowerContent.includes('[options]') && lowerContent.includes('[rules]'))
+  ) {
+    return 'cluster.fw';
+  }
+
+  if (
+    lowerName.includes('iptables') ||
+    /chain\s+input|chain\s+forward/im.test(content)
+  ) {
+    return 'iptables';
+  }
+
+  if (
+    lowerName.includes('lxc') ||
+    (lowerContent.includes('arch:') && lowerContent.includes('hostname:'))
+  ) {
+    return 'lxc.conf';
+  }
+
+  if (
+    lowerName.includes('storage') ||
+    /^\s*(dir|lvm|lvmthin|nfs):/im.test(content)
+  ) {
+    return 'storage.cfg';
+  }
+
+  return null;
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function AuditPage() {
   const [activeTab, setActiveTab] = useState<ConfigFileType>('sshd_config');
   const [inputCollapsed, setInputCollapsed] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dropSuccess, setDropSuccess] = useState(false);
+  const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const theme = useTheme();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const configInputs = useAuditStore((s) => s.configInputs);
   const setConfigInput = useAuditStore((s) => s.setConfigInput);
@@ -138,12 +200,77 @@ export function AuditPage() {
   /** Any config has content */
   const hasAnyContent = Object.values(configInputs).some((v) => v.trim().length > 0);
 
+  const triggerSuccessPulse = () => {
+    setDropSuccess(true);
+    window.setTimeout(() => setDropSuccess(false), 800);
+  };
+
+  const processIncomingFiles = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+
+    const files = Array.from(fileList);
+    const unresolved: PendingUpload[] = [];
+
+    for (const file of files) {
+      const content = await file.text();
+      const detected = detectConfigType(file.name, content);
+
+      if (detected) {
+        setConfigInput(detected, content);
+        setActiveTab(detected);
+      } else {
+        unresolved.push({
+          id: `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          name: file.name,
+          content,
+          selectedType: 'sshd_config',
+        });
+      }
+    }
+
+    if (unresolved.length > 0) {
+      setPendingUploads((prev) => [...prev, ...unresolved]);
+    }
+
+    triggerSuccessPulse();
+  };
+
+  const applyPendingUpload = (pending: PendingUpload) => {
+    setConfigInput(pending.selectedType, pending.content);
+    setActiveTab(pending.selectedType);
+    setPendingUploads((prev) => prev.filter((p) => p.id !== pending.id));
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="flex flex-col lg:flex-row gap-6">
         {/* ─── Left Panel: Config Input ────────────────────────── */}
         <div className={`${auditReport ? 'lg:w-[380px] lg:shrink-0' : 'lg:w-1/2'} transition-all`}>
-          <div className={`${theme.classes.card} border ${theme.classes.cardBorder} rounded-2xl overflow-hidden`}>
+          <div
+            className={`${theme.classes.card} border ${theme.classes.cardBorder} rounded-2xl overflow-hidden transition-all ${
+              isDragOver ? 'border-dashed ring-2 ring-offset-0' : ''
+            } ${dropSuccess ? 'animate-pulse' : ''}`}
+            style={isDragOver ? { borderColor: 'var(--pg-accent)', boxShadow: `0 0 0 2px ${theme.vars['--pg-accent']}33 inset` } : undefined}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                setIsDragOver(false);
+              }
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragOver(false);
+              void processIncomingFiles(e.dataTransfer.files);
+            }}
+          >
             {/* Panel header */}
             <div className={`px-4 py-3 border-b ${theme.classes.cardBorder} flex items-center justify-between`}>
               <div className="flex items-center gap-2">
@@ -175,6 +302,13 @@ export function AuditPage() {
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
+                  <div className={`mx-4 mt-3 px-3 py-2 rounded-lg border border-dashed ${theme.classes.cardBorder} ${theme.classes.textSecondary}`}>
+                    <div className="flex items-center gap-2 text-xs">
+                      {dropSuccess ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Upload className="w-3.5 h-3.5" />}
+                      <span>Drag & drop config files here, or upload with the button below.</span>
+                    </div>
+                  </div>
+
                   {/* Sample buttons */}
                   <div className="px-4 pt-3 flex flex-wrap items-center gap-2">
                     <span className={`text-xs ${theme.classes.textSecondary} mr-1`}>Load Sample:</span>
@@ -196,7 +330,54 @@ export function AuditPage() {
                     >
                       Hardened
                     </button>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-2.5 py-1 text-xs font-medium rounded-md bg-sky-500/15 text-sky-300 hover:bg-sky-500/25 transition-colors inline-flex items-center gap-1"
+                    >
+                      <Upload className="w-3 h-3" />
+                      Upload Files
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        void processIncomingFiles(e.target.files);
+                        e.currentTarget.value = '';
+                      }}
+                    />
                   </div>
+
+                  {pendingUploads.length > 0 && (
+                    <div className="px-4 pt-3 space-y-2">
+                      {pendingUploads.map((pending) => (
+                        <div key={pending.id} className={`p-2 rounded-lg border ${theme.classes.cardBorder} flex items-center gap-2`}>
+                          <span className={`text-xs ${theme.classes.textSecondary} truncate flex-1`} title={pending.name}>
+                            {pending.name}
+                          </span>
+                          <select
+                            value={pending.selectedType}
+                            onChange={(e) => {
+                              const selectedType = e.target.value as ConfigFileType;
+                              setPendingUploads((prev) => prev.map((p) => p.id === pending.id ? { ...p, selectedType } : p));
+                            }}
+                            className={`text-xs rounded-md px-2 py-1 border ${theme.classes.input}`}
+                          >
+                            {CONFIG_TABS.map((tab) => (
+                              <option key={tab.key} value={tab.key}>{tab.label}</option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => applyPendingUpload(pending)}
+                            className="text-xs px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Config tabs */}
                   <div className="px-4 pt-3 flex gap-1 overflow-x-auto scrollbar-thin">

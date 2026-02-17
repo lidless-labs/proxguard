@@ -12,6 +12,7 @@ export const firewallRules: SecurityRule[] = [
     title: 'Cluster Firewall Not Enabled',
     description:
       'The Proxmox VE cluster firewall is not enabled. Without the firewall, all network traffic is allowed to reach cluster services, including the API (port 8006), SSH, and inter-node communication.',
+    cisBenchmark: 'CIS Debian 11 - 3.5.1.1',
     test: (config) => {
       const fw = config.firewall;
       if (!fw) {
@@ -51,6 +52,7 @@ pvesh set /cluster/firewall/options --enable 1
     title: 'Default INPUT Policy is ACCEPT',
     description:
       'The default INPUT policy is ACCEPT, meaning any traffic not explicitly blocked is allowed. A secure configuration should DROP by default and only allow explicitly permitted traffic.',
+    cisBenchmark: 'CIS Debian 11 - 3.5.2.4',
     test: (config) => {
       const fw = config.firewall;
       if (!fw) {
@@ -96,6 +98,7 @@ pvesh set /cluster/firewall/options --enable 1
     title: 'No Firewall Rules Defined',
     description:
       'Zero firewall rules are defined in the cluster firewall. Without explicit rules, the firewall relies entirely on the default policy, which may be too permissive or too restrictive.',
+    cisBenchmark: 'CIS Debian 11 - 3.5.2.5',
     test: (config) => {
       const fw = config.firewall;
       if (!fw) {

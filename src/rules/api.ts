@@ -12,6 +12,7 @@ export const apiRules: SecurityRule[] = [
     title: 'API Tokens with Full Admin Privileges',
     description:
       'One or more API tokens are associated with users that have Administrator or PVEAdmin role at the root path (/). These tokens can perform any action on the cluster.',
+    cisBenchmark: 'PVE-API-001',
     test: (config) => {
       const auth = config.auth;
       const api = config.api;
@@ -63,6 +64,7 @@ pveum acl modify <path> --tokens <userid>!<tokenid> --roles PVEAuditor`,
     title: 'API Tokens Without Expiration',
     description:
       'One or more API tokens have no expiration date set. Long-lived tokens that are forgotten or leaked remain valid indefinitely.',
+    cisBenchmark: 'PVE-API-002',
     test: (config) => {
       const api = config.api;
       if (!api || api.tokens.length === 0) {

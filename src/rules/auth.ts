@@ -12,6 +12,7 @@ export const authRules: SecurityRule[] = [
     title: 'Users Without Two-Factor Authentication',
     description:
       'One or more users do not have 2FA (TOTP/U2F/WebAuthn) configured. Without 2FA, a compromised password grants full access.',
+    cisBenchmark: 'CIS Debian 11 - 5.4.2',
     test: (config) => {
       const auth = config.auth;
       if (!auth || auth.users.length === 0) {
@@ -61,6 +62,7 @@ echo "2FA must be configured individually per user in the Proxmox web UI"`,
     title: 'Root Account Has API Tokens',
     description:
       'The root@pam account has API tokens configured. API tokens for root grant unrestricted access and should be avoided in favor of dedicated service accounts.',
+    cisBenchmark: 'CIS Debian 11 - 5.4.1',
     test: (config) => {
       const auth = config.auth;
       if (!auth) {
@@ -98,6 +100,7 @@ pveum user token list root@pam
     title: 'Users with Administrator Role',
     description:
       'One or more users or groups have the Administrator role assigned. This built-in role grants all privileges and should be restricted to a minimum number of accounts.',
+    cisBenchmark: 'CIS Debian 11 - 5.3.1',
     test: (config) => {
       const auth = config.auth;
       if (!auth) {

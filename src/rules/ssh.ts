@@ -55,6 +55,7 @@ systemctl restart sshd`,
     title: 'SSH Running on Default Port 22',
     description:
       'SSH is configured on the default port 22. While security through obscurity is not a primary defense, changing the port reduces noise from automated scanners.',
+    cisBenchmark: 'CIS Debian 11 - 5.2.15',
     test: (config) => {
       const ssh = config.ssh;
       if (!ssh) {

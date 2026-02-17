@@ -2,9 +2,11 @@
  * HistoryPage — Past audit results from localStorage.
  * Theme-aware: uses active theme for all styling.
  */
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Clock, Award, History, ShieldOff } from 'lucide-react';
-import { useAuditStore } from '../store/auditStore';
+import { Trash2, Clock, Award, History, ShieldOff, GitCompareArrows } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuditStore, hydrateStoredReport } from '../store/auditStore';
 import { useTheme } from '../variants/ThemeProvider';
 import type { Grade } from '../types';
 
@@ -20,13 +22,45 @@ const gradeColors: Record<Grade, string> = {
 export function HistoryPage() {
   const history = useAuditStore((s) => s.history);
   const clearHistory = useAuditStore((s) => s.clearHistory);
+  const setComparisonPair = useAuditStore((s) => s.setComparisonPair);
   const theme = useTheme();
+  const navigate = useNavigate();
+  const deleteHistoryEntry = useAuditStore((s) => s.deleteHistoryEntry);
+  const [selected, setSelected] = useState<number[]>([]);
+
+  const fullReportTimestamps = useMemo(
+    () => new Set(history.filter((entry) => hydrateStoredReport(entry) !== null).map((entry) => entry.timestamp)),
+    [history]
+  );
 
   /** Delete a single history entry by timestamp */
   const deleteEntry = (timestamp: number) => {
-    useAuditStore.setState((s) => ({
-      history: s.history.filter((e) => e.timestamp !== timestamp),
-    }));
+    deleteHistoryEntry(timestamp);
+    setSelected((prev) => prev.filter((ts) => ts !== timestamp));
+  };
+
+  /** Clear selection when history is cleared */
+  const handleClearHistory = () => {
+    clearHistory();
+    setSelected([]);
+  };
+
+  const toggleSelection = (timestamp: number) => {
+    setSelected((prev) => {
+      if (prev.includes(timestamp)) {
+        return prev.filter((ts) => ts !== timestamp);
+      }
+      if (prev.length >= 2) {
+        return [...prev.slice(1), timestamp];
+      }
+      return [...prev, timestamp];
+    });
+  };
+
+  const compareSelected = () => {
+    if (selected.length !== 2) return;
+    setComparisonPair(selected[0], selected[1]);
+    navigate('/compare');
   };
 
   return (
@@ -49,15 +83,25 @@ export function HistoryPage() {
           </div>
         </div>
 
-        {history.length > 0 && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={clearHistory}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+            onClick={compareSelected}
+            disabled={selected.length !== 2}
+            className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${selected.length === 2 ? theme.classes.button : theme.classes.buttonDisabled}`}
           >
-            <Trash2 className="w-4 h-4" />
-            Clear All
+            <GitCompareArrows className="w-4 h-4" />
+            Compare Selected
           </button>
-        )}
+          {history.length > 0 && (
+            <button
+              onClick={handleClearHistory}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Clear All
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Empty state */}
@@ -93,6 +137,9 @@ export function HistoryPage() {
               minute: '2-digit',
             });
 
+            const canCompare = fullReportTimestamps.has(entry.timestamp);
+            const checked = selected.includes(entry.timestamp);
+
             return (
               <motion.div
                 key={entry.timestamp}
@@ -103,6 +150,16 @@ export function HistoryPage() {
                 className={`${theme.classes.card} border ${theme.classes.cardBorder} rounded-xl p-4 flex items-center justify-between gap-4`}
               >
                 <div className="flex items-center gap-4 min-w-0">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={!canCompare}
+                    onChange={() => toggleSelection(entry.timestamp)}
+                    aria-label={canCompare ? `Select audit from ${formatted} for comparison` : `Legacy entry from ${formatted} cannot be compared`}
+                    title={canCompare ? 'Select for comparison' : 'Legacy entry cannot be compared'}
+                    className="h-4 w-4 accent-[var(--pg-accent)] disabled:opacity-40"
+                  />
+
                   {/* Grade badge */}
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
@@ -119,6 +176,11 @@ export function HistoryPage() {
                       <span className={`text-sm font-semibold ${theme.classes.textPrimary}`}>
                         Score: {entry.overallScore}/100
                       </span>
+                      {!canCompare && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">
+                          legacy
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <Clock className={`w-3.5 h-3.5 ${theme.classes.textSecondary} shrink-0`} />
@@ -131,6 +193,7 @@ export function HistoryPage() {
                 <button
                   onClick={() => deleteEntry(entry.timestamp)}
                   className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0"
+                  aria-label={`Delete audit from ${formatted}`}
                   title="Delete this audit"
                 >
                   <Trash2 className="w-4 h-4" />

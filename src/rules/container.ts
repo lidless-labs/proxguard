@@ -12,6 +12,7 @@ export const containerRules: SecurityRule[] = [
     title: 'Privileged LXC Containers Detected',
     description:
       'One or more LXC containers are running in privileged mode. Privileged containers share the host\'s UID namespace, meaning a root escape in the container gives root on the host.',
+    cisBenchmark: 'PVE-CT-001',
     test: (config) => {
       const containers = config.containers;
       if (!containers || containers.containers.length === 0) {
@@ -53,6 +54,7 @@ pct config <CTID> | grep unprivileged
     title: 'Container Nesting Enabled',
     description:
       'One or more containers have the nesting feature enabled. Nesting allows running containers inside containers (e.g., Docker in LXC) but increases the attack surface.',
+    cisBenchmark: 'PVE-CT-002',
     test: (config) => {
       const containers = config.containers;
       if (!containers || containers.containers.length === 0) {

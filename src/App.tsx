@@ -5,12 +5,16 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Routes, Route, NavLink } from 'react-router-dom';
-import { Shield, History, Lock, X, FileText, Server, AlertTriangle, Calculator } from 'lucide-react';
+import { Shield, History, Lock, X, FileText, Server, AlertTriangle, Calculator, ClipboardCheck, Home, GitCompareArrows } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuditPage } from './components/AuditPage';
 import { HistoryPage } from './components/HistoryPage';
+import { CompliancePage } from './components/CompliancePage';
+import { DashboardPage } from './components/DashboardPage';
+import { ComparisonPage } from './components/ComparisonPage';
 import { VariantSelector } from './components/VariantSelector';
 import { ThemeProvider, useTheme } from './variants/ThemeProvider';
+import { useAuditStore } from './store/auditStore';
 import { allRules } from './rules';
 
 // ─── Explainability Modal ───────────────────────────────────────────────────
@@ -189,6 +193,7 @@ function TransparencyModal({ open, onClose }: TransparencyModalProps) {
 
 function AppShell() {
   const theme = useTheme();
+  const auditReport = useAuditStore((s) => s.auditReport);
   const [isTransparencyOpen, setIsTransparencyOpen] = useState(false);
 
   return (
@@ -228,6 +233,19 @@ function AppShell() {
             <NavLink
               to="/"
               end
+              aria-label="Home"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive ? theme.classes.navActive : theme.classes.navInactive
+                }`
+              }
+            >
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Home</span>
+            </NavLink>
+            <NavLink
+              to="/audit"
+              aria-label="Audit"
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive ? theme.classes.navActive : theme.classes.navInactive
@@ -239,6 +257,7 @@ function AppShell() {
             </NavLink>
             <NavLink
               to="/history"
+              aria-label="History"
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive ? theme.classes.navActive : theme.classes.navInactive
@@ -248,6 +267,32 @@ function AppShell() {
               <History className="w-4 h-4" />
               <span className="hidden sm:inline">History</span>
             </NavLink>
+            <NavLink
+              to="/compare"
+              aria-label="Compare"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive ? theme.classes.navActive : theme.classes.navInactive
+                }`
+              }
+            >
+              <GitCompareArrows className="w-4 h-4" />
+              <span className="hidden sm:inline">Compare</span>
+            </NavLink>
+            {auditReport && (
+              <NavLink
+                to="/compliance"
+                aria-label="Compliance"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive ? theme.classes.navActive : theme.classes.navInactive
+                  }`
+                }
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                <span className="hidden sm:inline">Compliance</span>
+              </NavLink>
+            )}
           </nav>
         </div>
 
@@ -260,8 +305,11 @@ function AppShell() {
       {/* ─── Main Content ────────────────────────────────────────── */}
       <main className="flex-1">
         <Routes>
-          <Route path="/" element={<AuditPage />} />
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/audit" element={<AuditPage />} />
           <Route path="/history" element={<HistoryPage />} />
+          <Route path="/compare" element={<ComparisonPage />} />
+          <Route path="/compliance" element={<CompliancePage />} />
         </Routes>
       </main>
 
@@ -283,8 +331,21 @@ function AppShell() {
               100% client-side — your configs never leave your browser
             </button>
           </div>
-          <div className={`text-xs ${theme.classes.textSecondary} opacity-60`}>
-            ProxGuard v0.1.0 • {theme.name} theme
+          <div className={`flex items-center gap-3 text-xs ${theme.classes.textSecondary} opacity-60`}>
+            <span>ProxGuard v0.1.0</span>
+            <span>•</span>
+            <a
+              href="https://github.com/solomonneas/proxguard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 hover:opacity-100 transition-opacity"
+              aria-label="View ProxGuard on GitHub"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+              </svg>
+              <span>solomonneas</span>
+            </a>
           </div>
         </div>
       </footer>

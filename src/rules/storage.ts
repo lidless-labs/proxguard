@@ -12,6 +12,7 @@ export const storageRules: SecurityRule[] = [
     title: 'NFS Mount with no_root_squash',
     description:
       'An NFS storage backend is configured with no_root_squash mount option. This allows root on the Proxmox host to act as root on the NFS server, which is a privilege escalation vector.',
+    cisBenchmark: 'PVE-STOR-001',
     test: (config) => {
       const storage = config.storage;
       if (!storage || storage.entries.length === 0) {
@@ -57,6 +58,7 @@ grep -A5 'nfs:' /etc/pve/storage.cfg
     title: 'CIFS Mount with Broad Permissions',
     description:
       'A CIFS/SMB storage backend is configured with world-readable permissions (file_mode=0777 or dir_mode=0777) or without explicit credentials, allowing any local user to access the share.',
+    cisBenchmark: 'PVE-STOR-002',
     test: (config) => {
       const storage = config.storage;
       if (!storage || storage.entries.length === 0) {
