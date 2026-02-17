@@ -278,9 +278,7 @@ function AppShell() {
                 color: 'inherit',
                 textUnderlineOffset: '2px',
                 textDecorationColor: 'var(--pg-accent)',
-                '--tw-ring-color': 'var(--pg-accent)',
-                '--tw-ring-offset-color': 'var(--pg-bg)',
-              }}
+              } as React.CSSProperties}
             >
               100% client-side — your configs never leave your browser
             </button>
