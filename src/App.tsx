@@ -328,7 +328,7 @@ function AppShell() {
                 textDecorationColor: 'var(--pg-accent)',
               } as React.CSSProperties}
             >
-              100% client-side — your configs never leave your browser
+              100% client-side. Your configs never leave your browser.
             </button>
           </div>
           <div className={`flex items-center gap-3 text-xs ${theme.classes.textSecondary} opacity-60`}>
