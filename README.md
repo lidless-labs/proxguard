@@ -1,9 +1,10 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/Zustand-4-FFD43B?style=flat-square" alt="Zustand" />
-  <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Zustand-5-FFD43B?style=flat-square" alt="Zustand" />
+  <img src="https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Framer_Motion-11-FF0050?style=flat-square&logo=framer&logoColor=white" alt="Framer Motion" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License" />
 </p>
 
@@ -133,13 +134,15 @@ No data is sent anywhere. The entire audit runs client-side in your browser.
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| **Framework** | React 18 | Interactive UI |
+| **Framework** | React 19 | Interactive UI |
 | **Language** | TypeScript 5 | Type safety |
-| **Styling** | Tailwind CSS 3 | Utility-first CSS |
-| **State** | Zustand | Global state and persistence |
-| **Bundler** | Vite 5 | Dev server and build |
+| **Styling** | Tailwind CSS 4 | Utility-first CSS |
+| **Animation** | Framer Motion 11 | Transitions and animated gauges |
+| **Charts** | Recharts | Score visualization and radar charts |
+| **State** | Zustand 5 | Global state and persistence |
+| **Bundler** | Vite 7 | Dev server and build |
 | **Icons** | Lucide React | Consistent icon set |
-| **DnD** | React Beautiful DnD | Drag-and-drop reordering |
+| **DnD** | React Beautiful DnD | Drag-and-drop rule reordering |
 
 ---
 
