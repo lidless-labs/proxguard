@@ -1,2 +1,8 @@
 node_modules/
 dist/
+CLAUDE.md
+TASK_*.md
+IMPLEMENTATION_*.md
+*_SUMMARY.md
+POLISH_NOTES.md
+FRONTEND_DESIGN.md
