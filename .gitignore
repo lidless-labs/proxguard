@@ -1,5 +1,4 @@
-node_modules/
-dist/
+# AI/Automation Files - DO NOT COMMIT
 CLAUDE.md
 TASK_*.md
 IMPLEMENTATION_*.md
@@ -7,7 +6,68 @@ IMPLEMENTATION_*.md
 POLISH_NOTES.md
 FRONTEND_DESIGN.md
 
-# Claude Code session files (never commit)
+# Claude Code + research surface
 .claude/
 .codex/
 .learnings/
+docs/superpowers/
+**/memory-handoffs/
+
+# OpenClaw files
+.openclaw/
+*.sqlite
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Caches
+.vite/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.cache/
+.coverage
+.nyc_output/
+coverage/
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.template
+*.env
+
+# Secrets
+credentials.json
+*-credentials.json
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
