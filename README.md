@@ -1,22 +1,69 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React" />
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/Zustand-5-FFD43B?style=flat-square" alt="Zustand" />
-  <img src="https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
-  <img src="https://img.shields.io/badge/Framer_Motion-11-FF0050?style=flat-square&logo=framer&logoColor=white" alt="Framer Motion" />
-  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License" />
+  <img src="docs/assets/proxguard-banner.jpg" alt="proxguard banner" width="900">
 </p>
 
-# 🛡️ ProxGuard
+<h1 align="center">ProxGuard</h1>
 
-**Proxmox VE security auditor with CIS Benchmark-backed scoring, conflict detection, and auto-generated remediation scripts.**
+<p align="center"><strong>Proxmox VE security auditor with CIS Benchmark-backed scoring, conflict detection, and auto-generated remediation scripts.</strong></p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="version">
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="license MIT">
+</p>
 
 ProxGuard parses your actual Proxmox configuration files (sshd_config, cluster.fw, user.cfg, storage.cfg, API tokens) and grades your security posture across six categories. Every rule traces back to a CIS Benchmark or Proxmox-specific security standard. Failed checks include remediation steps and copy-paste shell scripts to fix the issue.
 
 It also visualizes firewall rules with drag-drop reordering and automatic conflict detection, so you can see shadowing, contradictions, and unreachable rules before they cause problems.
 
 ![ProxGuard](docs/screenshots/dashboard.png)
+
+---
+
+## Features
+
+- **Security Audit Engine** - Paste config files, get a letter grade with detailed findings
+- **CIS Benchmark Rules** - 16 rules mapped to CIS Debian 11 and Proxmox security standards
+- **Remediation Scripts** - Every failed check includes copy-paste shell commands to fix the issue
+- **Firewall Visualization** - Flat list view of all rules with color-coded direction indicators
+- **Drag-Drop Reordering** - Reorder rules by dragging, see impact on priority instantly
+- **Conflict Detection** - 5 types: shadowing, contradictions, unreachable, port overlap, protocol mismatch
+- **Audit Trail** - Immutable changelog showing who changed what and when
+- **Inline Editing** - Edit rule properties (direction, protocol, port, action) in-place
+- **Bulk Operations** - Enable/disable multiple rules, delete groups
+- **Search & Filter** - Find rules by IP, port, protocol, or action
+- **5 Visual Themes** - Tactical, Analyst, Terminal, Command, Cyber
+- **Rule Import/Export** - Backup and restore firewall configs
+- **Offline-First** - All processing happens in the browser, no data leaves your machine
+
+---
+
+## Quick Start
+
+```bash
+git clone https://github.com/lidless-labs/proxguard.git
+cd proxguard
+npm install
+npm run dev
+```
+
+Open **http://localhost:5190**
+
+---
+
+## Running an Audit
+
+1. Navigate to the **Audit** tab
+2. Paste your Proxmox config files:
+   - `/etc/ssh/sshd_config` (SSH hardening)
+   - `/etc/pve/firewall/cluster.fw` (firewall rules)
+   - `/etc/pve/user.cfg` (users, roles, 2FA)
+   - `/etc/pve/storage.cfg` (NFS/CIFS mounts)
+   - API token list (`pveum apitoken list`)
+3. ProxGuard parses each file, runs all 16 rules, and generates your report
+4. Click any finding for details, CIS reference, and remediation script
+
+No data is sent anywhere. The entire audit runs client-side in your browser.
 
 ---
 
@@ -80,53 +127,6 @@ Every rule references its source standard:
 | API Tokens Without Expiration | Medium | PVE-API-002 |
 
 PVE-prefixed benchmarks are Proxmox-specific rules where no direct CIS mapping exists.
-
----
-
-## Features
-
-- **Security Audit Engine** - Paste config files, get a letter grade with detailed findings
-- **CIS Benchmark Rules** - 16 rules mapped to CIS Debian 11 and Proxmox security standards
-- **Remediation Scripts** - Every failed check includes copy-paste shell commands to fix the issue
-- **Firewall Visualization** - Flat list view of all rules with color-coded direction indicators
-- **Drag-Drop Reordering** - Reorder rules by dragging, see impact on priority instantly
-- **Conflict Detection** - 5 types: shadowing, contradictions, unreachable, port overlap, protocol mismatch
-- **Audit Trail** - Immutable changelog showing who changed what and when
-- **Inline Editing** - Edit rule properties (direction, protocol, port, action) in-place
-- **Bulk Operations** - Enable/disable multiple rules, delete groups
-- **Search & Filter** - Find rules by IP, port, protocol, or action
-- **5 Visual Themes** - Tactical, Analyst, Terminal, Command, Cyber
-- **Rule Import/Export** - Backup and restore firewall configs
-- **Offline-First** - All processing happens in the browser, no data leaves your machine
-
----
-
-## Quick Start
-
-```bash
-git clone https://github.com/solomonneas/proxguard.git
-cd proxguard
-npm install
-npm run dev
-```
-
-Open **http://localhost:5190**
-
----
-
-## Running an Audit
-
-1. Navigate to the **Audit** tab
-2. Paste your Proxmox config files:
-   - `/etc/ssh/sshd_config` (SSH hardening)
-   - `/etc/pve/firewall/cluster.fw` (firewall rules)
-   - `/etc/pve/user.cfg` (users, roles, 2FA)
-   - `/etc/pve/storage.cfg` (NFS/CIFS mounts)
-   - API token list (`pveum apitoken list`)
-3. ProxGuard parses each file, runs all 16 rules, and generates your report
-4. Click any finding for details, CIS reference, and remediation script
-
-No data is sent anywhere. The entire audit runs client-side in your browser.
 
 ---
 
