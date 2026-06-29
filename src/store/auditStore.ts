@@ -144,7 +144,6 @@ interface AuditState {
   history: StoredHistoryEntry[];
 
   // UI state
-  activeVariant: number;
   isAuditing: boolean;
   comparisonPair: [number, number] | null;
 
@@ -154,7 +153,6 @@ interface AuditState {
   loadSample: (type: SampleType) => void;
   loadLastConfig: () => void;
   clearResults: () => void;
-  setVariant: (variant: number) => void;
   clearHistory: () => void;
   deleteHistoryEntry: (timestamp: number) => void;
   setComparisonPair: (a: number, b: number) => void;
@@ -170,7 +168,6 @@ export const useAuditStore = create<AuditState>()(
       parsedConfig: null,
       auditReport: null,
       history: [],
-      activeVariant: 1,
       isAuditing: false,
       comparisonPair: null,
 
@@ -239,11 +236,6 @@ export const useAuditStore = create<AuditState>()(
         });
       },
 
-      /** Set the active UI theme (1: light, 2: dark) */
-      setVariant: (variant: number) => {
-        set({ activeVariant: Math.max(1, Math.min(2, variant)) });
-      },
-
       /** Clear audit history */
       clearHistory: () => {
         set({ history: [], comparisonPair: null });
@@ -269,10 +261,9 @@ export const useAuditStore = create<AuditState>()(
     }),
     {
       name: 'proxguard-storage',
-      // Only persist history, comparison pair, variant selection, and last audited configs
+      // Only persist history, comparison pair, and last audited configs
       partialize: (state) => ({
         history: state.history,
-        activeVariant: state.activeVariant,
         comparisonPair: state.comparisonPair,
         lastConfigInputs: state.lastConfigInputs,
       }),
@@ -283,7 +274,6 @@ export const useAuditStore = create<AuditState>()(
 
         const state = persistedState as {
           history?: unknown;
-          activeVariant?: unknown;
           comparisonPair?: unknown;
           lastConfigInputs?: unknown;
         };

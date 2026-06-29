@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* ─── Custom scrollbar for dark theme ─────────────────────────── */
+/* ─── Custom scrollbar ────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #374151 transparent;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 *::-webkit-scrollbar {
@@ -16,18 +16,18 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #cbd5e1;
   border-radius: 3px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: #94a3b8;
 }
 
 /* ─── Selection color ─────────────────────────────────────────── */
 ::selection {
-  background: rgba(16, 185, 129, 0.3);
-  color: #fff;
+  background: rgba(37, 99, 235, 0.2);
+  color: #1e293b;
 }
 
 /* ─── Smooth transitions for interactive elements ─────────────── */

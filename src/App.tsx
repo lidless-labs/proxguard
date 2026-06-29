@@ -1,7 +1,7 @@
 /**
  * ProxGuard — Main App Layout
- * Routes, header with variant selector, footer, and navigation shell.
- * Wrapped in ThemeProvider for variant-aware styling.
+ * Routes, header, footer, and navigation shell.
+ * Wrapped in ThemeProvider for theme-aware styling.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Routes, Route, NavLink } from 'react-router-dom';
@@ -12,7 +12,6 @@ import { HistoryPage } from './components/HistoryPage';
 import { CompliancePage } from './components/CompliancePage';
 import { DashboardPage } from './components/DashboardPage';
 import { ComparisonPage } from './components/ComparisonPage';
-import { VariantSelector } from './components/VariantSelector';
 import { ThemeProvider, useTheme } from './variants/ThemeProvider';
 import { useAuditStore } from './store/auditStore';
 import { allRules } from './rules';
@@ -223,11 +222,6 @@ function AppShell() {
             </div>
           </NavLink>
 
-          {/* Center: Variant Selector */}
-          <div className="hidden sm:flex">
-            <VariantSelector />
-          </div>
-
           {/* Navigation */}
           <nav className="flex items-center gap-1">
             <NavLink
@@ -294,11 +288,6 @@ function AppShell() {
               </NavLink>
             )}
           </nav>
-        </div>
-
-        {/* Mobile variant selector */}
-        <div className="sm:hidden flex justify-center pb-2">
-          <VariantSelector />
         </div>
       </header>
 

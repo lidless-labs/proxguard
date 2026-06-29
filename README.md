@@ -32,7 +32,6 @@ It also visualizes firewall rules with drag-drop reordering and automatic confli
 - **Inline Editing** - Edit rule properties (direction, protocol, port, action) in-place
 - **Bulk Operations** - Enable/disable multiple rules, delete groups
 - **Search & Filter** - Find rules by IP, port, protocol, or action
-- **5 Visual Themes** - Tactical, Analyst, Terminal, Command, Cyber
 - **Rule Import/Export** - Backup and restore firewall configs
 - **Offline-First** - All processing happens in the browser, no data leaves your machine
 
@@ -207,20 +206,6 @@ proxguard/
 ├── vite.config.ts
 └── tailwind.config.js
 ```
-
----
-
-## 5 Themes
-
-| Theme | Colors | Aesthetic |
-|-------|--------|-----------|
-| **Tactical** | Dark slate, red | SOC operations |
-| **Analyst** | Clean white, blue | Professional audit |
-| **Terminal** | Black, matrix green | Hacker/OSINT |
-| **Command** | OD green, amber | Military command |
-| **Cyber** | Neon cyan/magenta | Cyberpunk |
-
-All themes share the same audit engine and conflict detection. Switching is instant.
 
 ---
 
