@@ -7,9 +7,9 @@
 <p align="center"><strong>Proxmox VE security auditor with CIS Benchmark-backed scoring, conflict detection, and auto-generated remediation scripts.</strong></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge" alt="version">
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="license MIT">
+  <img src="https://shieldcn.dev/badge/version-0.1.0-blue.svg" alt="version">
+  <img src="https://shieldcn.dev/badge/TypeScript-5-3178C6.svg?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://shieldcn.dev/badge/license-MIT-green.svg" alt="license MIT">
 </p>
 
 ProxGuard parses your actual Proxmox configuration files (sshd_config, cluster.fw, user.cfg, storage.cfg, API tokens) and grades your security posture across six categories. Every rule traces back to a CIS Benchmark or Proxmox-specific security standard. Failed checks include remediation steps and copy-paste shell scripts to fix the issue.
