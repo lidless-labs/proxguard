@@ -1,16 +1,20 @@
 <p align="center">
-  <img src="docs/assets/proxguard-banner.jpg" alt="proxguard banner" width="900">
+  <img src="docs/assets/proxguard-social-preview.jpg" alt="proxguard banner" width="900">
 </p>
 
 <h1 align="center">ProxGuard</h1>
 
 <p align="center"><strong>Proxmox VE security auditor with CIS Benchmark-backed scoring, conflict detection, and auto-generated remediation scripts.</strong></p>
 
+<p align="center"><a href="https://lidless.dev/proxguard"><strong>Website</strong></a> &middot; <a href="#what-it-does">What it does</a> &middot; <a href="#install">Install</a></p>
+
 <p align="center">
   <img src="https://shieldcn.dev/badge/version-0.1.0-blue.svg" alt="version">
   <img src="https://shieldcn.dev/badge/TypeScript-5-3178C6.svg?logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://shieldcn.dev/badge/license-MIT-green.svg" alt="license MIT">
 </p>
+
+## What it does
 
 ProxGuard parses your actual Proxmox configuration files (sshd_config, cluster.fw, user.cfg, storage.cfg, API tokens) and grades your security posture across six categories. Every rule traces back to a CIS Benchmark or Proxmox-specific security standard. Failed checks include remediation steps and copy-paste shell scripts to fix the issue.
 
@@ -37,7 +41,7 @@ It also visualizes firewall rules with drag-drop reordering and automatic confli
 
 ---
 
-## Quick Start
+## Install
 
 ```bash
 git clone https://github.com/lidless-labs/proxguard.git
@@ -50,7 +54,7 @@ Open **http://localhost:5190**
 
 ---
 
-## Running an Audit
+## Running an audit
 
 1. Navigate to the **Audit** tab
 2. Paste your Proxmox config files:
@@ -66,7 +70,7 @@ No data is sent anywhere. The entire audit runs client-side in your browser.
 
 ---
 
-## How the Scoring Works
+## How the scoring works
 
 ProxGuard runs 16 security rules across 6 categories. Each category has a weight reflecting its risk to a Proxmox environment:
 
@@ -102,7 +106,7 @@ Category scores are weighted and combined into an overall score:
 | **D** | 60-69 | Significant risks |
 | **F** | <60 | Critical vulnerabilities present |
 
-### CIS Benchmark Mapping
+### CIS benchmark mapping
 
 Every rule references its source standard:
 
@@ -129,7 +133,7 @@ PVE-prefixed benchmarks are Proxmox-specific rules where no direct CIS mapping e
 
 ---
 
-## Tech Stack
+## Tech stack
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
@@ -145,7 +149,7 @@ PVE-prefixed benchmarks are Proxmox-specific rules where no direct CIS mapping e
 
 ---
 
-## Rule Conflict Types
+## Rule conflict types
 
 ProxGuard detects five types of firewall rule conflicts:
 
@@ -159,7 +163,7 @@ Each conflict is highlighted with a severity indicator and a clear explanation.
 
 ---
 
-## Project Structure
+## Project structure
 
 ```text
 proxguard/
@@ -209,7 +213,7 @@ proxguard/
 
 ---
 
-## Demo Configs
+## Demo configs
 
 ProxGuard includes three demo configurations so you can see the audit engine without a Proxmox cluster:
 
