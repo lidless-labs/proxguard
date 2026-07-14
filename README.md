@@ -2,6 +2,10 @@
   <img src="docs/assets/proxguard-social-preview.jpg" alt="proxguard banner" width="900">
 </p>
 
+<p align="center">
+  <a href="https://lidless.dev"><img src="docs/assets/marks/proxguard-circle.png" width="48" alt="Lidless Labs"></a>
+</p>
+
 <h1 align="center">ProxGuard</h1>
 
 <p align="center"><strong>Proxmox VE security auditor with CIS Benchmark-backed scoring, conflict detection, and auto-generated remediation scripts.</strong></p>
@@ -226,3 +230,11 @@ ProxGuard includes three demo configurations so you can see the audit engine wit
 ## License
 
 MIT - see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center"><a href="https://lidless.dev">Part of <strong>Lidless Labs</strong></a> &middot; the eye does not close</p>
+
+<p align="center"><sub><strong>Homelab:</strong> <a href="https://github.com/lidless-labs/proxmox-mcp">proxmox-mcp</a> &middot; <a href="https://github.com/lidless-labs/adguardctrl">adguardctrl</a> &middot; <a href="https://github.com/lidless-labs/immichctrl">immichctrl</a> &middot; <a href="https://github.com/lidless-labs/jellyctrl">jellyctrl</a></sub></p>
+
+<p align="center"><sub><a href="https://lidless.dev">All tools</a> &middot; <a href="https://github.com/lidless-labs">Lidless Labs on GitHub</a></sub></p>
