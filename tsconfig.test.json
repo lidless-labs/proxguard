@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "outDir": ".test-dist",
+    "rootDir": ".",
+    "strict": true,
+    "skipLibCheck": true,
+    "declaration": false,
+    "noEmit": false,
+    "verbatimModuleSyntax": false,
+    "erasableSyntaxOnly": false
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["src/**/*.tsx", "src/main.tsx", "src/App.tsx", "src/components/**", "src/variants/**"]
+}

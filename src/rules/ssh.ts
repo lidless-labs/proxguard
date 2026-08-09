@@ -22,24 +22,22 @@ export const sshRules: SecurityRule[] = [
       const rootLogin = ssh.permitRootLogin;
       const passwordAuth = ssh.passwordAuthentication;
 
-      // Root can log in with password if:
-      // - PermitRootLogin is 'yes' AND PasswordAuthentication is not 'no'
-      // - PermitRootLogin is null (default is prohibit-password in modern OpenSSH, but
-      //   many Proxmox installs override to 'yes')
-      const rootAllowed = rootLogin === 'yes' || rootLogin === null;
+      // Root password login only when PermitRootLogin is explicitly yes.
+      // Absent directive: modern OpenSSH defaults to prohibit-password — do not assume yes.
+      const rootAllowed = rootLogin === 'yes';
       const passwordAllowed = passwordAuth !== 'no';
 
       if (rootAllowed && passwordAllowed) {
         return {
           passed: false,
-          evidence: `PermitRootLogin=${rootLogin ?? 'default (yes)'}, PasswordAuthentication=${passwordAuth ?? 'default (yes)'}`,
+          evidence: `PermitRootLogin=${rootLogin}, PasswordAuthentication=${passwordAuth ?? 'default (yes)'}`,
           details: 'Root can authenticate via SSH using a password. An attacker only needs to guess the root password.',
         };
       }
 
       return {
         passed: true,
-        evidence: `PermitRootLogin=${rootLogin ?? 'default'}, PasswordAuthentication=${passwordAuth ?? 'default'}`,
+        evidence: `PermitRootLogin=${rootLogin ?? 'default (prohibit-password)'}, PasswordAuthentication=${passwordAuth ?? 'default'}`,
       };
     },
     remediation:

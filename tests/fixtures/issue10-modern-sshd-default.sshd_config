@@ -1,0 +1,10 @@
+# Debian / Proxmox stock sshd_config excerpt
+# PermitRootLogin intentionally absent — OpenSSH 8+ default is prohibit-password
+
+Port 22
+PasswordAuthentication yes
+PubkeyAuthentication yes
+PermitEmptyPasswords no
+MaxAuthTries 6
+X11Forwarding no
+UsePAM yes
