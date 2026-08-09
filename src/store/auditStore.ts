@@ -192,8 +192,18 @@ export const useAuditStore = create<AuditState>()(
           // Parse all configs
           const parsedConfig = parseAllConfigs(configInputs);
 
-          // Generate audit report
+          // Generate audit report (null = nothing assessable)
           const auditReport = generateAuditReport(parsedConfig, allRules);
+
+          if (!auditReport) {
+            // Do not persist or display an unassessed empty audit
+            set({
+              parsedConfig,
+              auditReport: null,
+              isAuditing: false,
+            });
+            return;
+          }
 
           // Add to history (store full serializable report)
           const historyEntry = serializeReport(auditReport);

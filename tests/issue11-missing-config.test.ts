@@ -54,6 +54,7 @@ test('issue #11: ssh-only input must not produce findings for other categories',
   const fixture = readFixture('issue11-ssh-only.sshd_config');
   const config = parseAllConfigs({ 'sshd_config': fixture });
   const report = generateAuditReport(config, allRules);
+  assert.ok(report, 'supplied sshd_config must produce an audit report');
 
   assert.deepEqual(report.inputFiles, ['sshd_config']);
 
@@ -74,6 +75,7 @@ test('issue #11: overall score must only reflect supplied categories', () => {
   const fixture = readFixture('issue11-ssh-only.sshd_config');
   const config = parseAllConfigs({ 'sshd_config': fixture });
   const report = generateAuditReport(config, allRules);
+  assert.ok(report, 'supplied sshd_config must produce an audit report');
 
   const sshCategory = report.categories.find((c) => c.category === 'ssh');
   assert.ok(sshCategory, 'ssh category score must exist when sshd_config is supplied');

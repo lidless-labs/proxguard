@@ -114,17 +114,23 @@ function categoriesFromInputFiles(inputFiles: ConfigFileType[]): AuditCategory[]
   return order.filter((cat) => assessed.has(cat));
 }
 
-/** Run rules for supplied categories only and generate a full audit report */
+/** Run rules for supplied categories only and generate a full audit report.
+ * Returns null when no non-empty source input was supplied (nothing to assess). */
 export function generateAuditReport(
   parsedConfig: ParsedConfig,
   rules: SecurityRule[]
-): AuditReport {
+): AuditReport | null {
   // Determine which files had input (presence drives assessment scope)
   const inputFiles: ConfigFileType[] = (
     Object.entries(parsedConfig.raw) as [ConfigFileType, string][]
   )
     .filter(([, value]) => value.trim().length > 0)
     .map(([key]) => key);
+
+  // Entirely empty / whitespace-only input is unassessed — not a scored report
+  if (inputFiles.length === 0) {
+    return null;
+  }
 
   const assessedCategories = categoriesFromInputFiles(inputFiles);
   const assessedSet = new Set(assessedCategories);
