@@ -1,0 +1,3 @@
+# Minimal sshd_config supplied alone for partial-audit contract tests
+PasswordAuthentication yes
+Port 22
