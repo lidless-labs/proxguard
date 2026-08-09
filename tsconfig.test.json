@@ -14,5 +14,5 @@
     "erasableSyntaxOnly": false
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
-  "exclude": ["src/**/*.tsx", "src/main.tsx", "src/App.tsx", "src/components/**", "src/variants/**", "src/store/**"]
+  "exclude": ["src/**/*.tsx", "src/main.tsx", "src/App.tsx", "src/components/**", "src/variants/**"]
 }

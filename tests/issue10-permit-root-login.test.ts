@@ -39,3 +39,25 @@ test('issue #10: modern default sshd without PermitRootLogin is not root passwor
     `must not assume PermitRootLogin default is yes; evidence=${result.evidence}`,
   );
 });
+
+test('issue #10: explicit PermitRootLogin yes with PasswordAuthentication yes fails root-ssh-password', () => {
+  const fixture = readFixture('issue10-explicit-root-password.sshd_config');
+  const ssh = parseSSHConfig(fixture);
+  const rule = sshRules.find((r) => r.id === 'root-ssh-password');
+  assert.ok(rule, 'root-ssh-password rule must exist');
+
+  const result = rule.test({
+    ssh,
+    raw: { ...EMPTY_RAW, 'sshd_config': fixture },
+  });
+
+  assert.equal(
+    result.passed,
+    false,
+    `explicit PermitRootLogin yes with password auth allowed must fail; evidence=${result.evidence}`,
+  );
+  assert.ok(
+    result.evidence.includes('PermitRootLogin=yes'),
+    `evidence must cite explicit PermitRootLogin=yes; evidence=${result.evidence}`,
+  );
+});
