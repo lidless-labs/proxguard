@@ -10,12 +10,20 @@ import { parseIptables } from './iptables';
 import { parseLXCConfig } from './lxc';
 import { parseStorageConfig } from './storage';
 
+/** True when the caller supplied non-empty content for this file type. */
+function isSupplied(
+  inputs: Partial<Record<ConfigFileType, string>>,
+  fileType: ConfigFileType
+): boolean {
+  return (inputs[fileType] ?? '').trim().length > 0;
+}
+
 /**
  * Parse all provided config files into a unified ParsedConfig object.
- * Handles missing/empty inputs gracefully.
+ * Unsupplied (missing/empty) sources stay undefined so rules and scoring can skip them.
  */
 export function parseAllConfigs(inputs: Partial<Record<ConfigFileType, string>>): ParsedConfig {
-  // Build raw record with defaults
+  // Build raw record with defaults (empty string = not supplied)
   const raw: Record<ConfigFileType, string> = {
     'sshd_config': inputs['sshd_config'] ?? '',
     'user.cfg': inputs['user.cfg'] ?? '',
@@ -25,22 +33,28 @@ export function parseAllConfigs(inputs: Partial<Record<ConfigFileType, string>>)
     'storage.cfg': inputs['storage.cfg'] ?? '',
   };
 
-  // Parse each config
-  const ssh = parseSSHConfig(raw['sshd_config']);
-  const auth = parseUserConfig(raw['user.cfg']);
-  const firewall = parseClusterFirewall(raw['cluster.fw']);
-  const iptables = parseIptables(raw['iptables']);
-  const containers = parseLXCConfig(raw['lxc.conf']);
-  const storage = parseStorageConfig(raw['storage.cfg']);
+  // Parse only supplied configs — omit truthy empty objects for missing sources
+  const ssh = isSupplied(inputs, 'sshd_config') ? parseSSHConfig(raw['sshd_config']) : undefined;
+  const auth = isSupplied(inputs, 'user.cfg') ? parseUserConfig(raw['user.cfg']) : undefined;
+  const firewall = isSupplied(inputs, 'cluster.fw')
+    ? parseClusterFirewall(raw['cluster.fw'])
+    : undefined;
+  const iptables = isSupplied(inputs, 'iptables') ? parseIptables(raw['iptables']) : undefined;
+  const containers = isSupplied(inputs, 'lxc.conf') ? parseLXCConfig(raw['lxc.conf']) : undefined;
+  const storage = isSupplied(inputs, 'storage.cfg')
+    ? parseStorageConfig(raw['storage.cfg'])
+    : undefined;
 
-  // Derive API config from auth tokens + relevant ACLs
-  const api: ParsedAPI = {
-    tokens: auth.tokens,
-    tokenAcls: auth.acls.filter(acl => {
-      // Include ACLs that reference token users
-      return auth.tokens.some(t => acl.ugid === t.userid || acl.ugid.includes('!'));
-    }),
-  };
+  // Derive API config from auth tokens + relevant ACLs (only when user.cfg was supplied)
+  const api: ParsedAPI | undefined = auth
+    ? {
+        tokens: auth.tokens,
+        tokenAcls: auth.acls.filter(acl => {
+          // Include ACLs that reference token users
+          return auth.tokens.some(t => acl.ugid === t.userid || acl.ugid.includes('!'));
+        }),
+      }
+    : undefined;
 
   return {
     ssh,

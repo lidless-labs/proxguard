@@ -83,22 +83,63 @@ export function calculateOverallScore(categories: CategoryScore[]): number {
   return Math.round(weightedSum / totalWeight);
 }
 
-/** Run all rules against parsed config and generate a full audit report */
+/** Map supplied config files to audit categories that can be assessed. */
+function categoriesFromInputFiles(inputFiles: ConfigFileType[]): AuditCategory[] {
+  const assessed = new Set<AuditCategory>();
+
+  for (const file of inputFiles) {
+    switch (file) {
+      case 'sshd_config':
+        assessed.add('ssh');
+        break;
+      case 'user.cfg':
+        assessed.add('auth');
+        assessed.add('api');
+        break;
+      case 'cluster.fw':
+      case 'iptables':
+        assessed.add('firewall');
+        break;
+      case 'lxc.conf':
+        assessed.add('container');
+        break;
+      case 'storage.cfg':
+        assessed.add('storage');
+        break;
+    }
+  }
+
+  // Stable category order for report consumers
+  const order: AuditCategory[] = ['ssh', 'firewall', 'auth', 'container', 'storage', 'api'];
+  return order.filter((cat) => assessed.has(cat));
+}
+
+/** Run rules for supplied categories only and generate a full audit report */
 export function generateAuditReport(
   parsedConfig: ParsedConfig,
   rules: SecurityRule[]
 ): AuditReport {
-  // Evaluate all rules
-  const allFindings: Finding[] = rules.map(rule => ({
-    rule,
-    result: rule.test(parsedConfig),
-  }));
+  // Determine which files had input (presence drives assessment scope)
+  const inputFiles: ConfigFileType[] = (
+    Object.entries(parsedConfig.raw) as [ConfigFileType, string][]
+  )
+    .filter(([, value]) => value.trim().length > 0)
+    .map(([key]) => key);
 
-  // Group findings by category
+  const assessedCategories = categoriesFromInputFiles(inputFiles);
+  const assessedSet = new Set(assessedCategories);
+
+  // Evaluate only rules whose category has a supplied source
+  const allFindings: Finding[] = rules
+    .filter((rule) => assessedSet.has(rule.category))
+    .map((rule) => ({
+      rule,
+      result: rule.test(parsedConfig),
+    }));
+
+  // Group findings by assessed category
   const categoryFindings = new Map<AuditCategory, Finding[]>();
-  const allCategories: AuditCategory[] = ['ssh', 'firewall', 'auth', 'container', 'storage', 'api'];
-
-  for (const cat of allCategories) {
+  for (const cat of assessedCategories) {
     categoryFindings.set(cat, []);
   }
 
@@ -108,21 +149,14 @@ export function generateAuditReport(
     categoryFindings.set(finding.rule.category, catFindings);
   }
 
-  // Calculate category scores
-  const categories: CategoryScore[] = allCategories.map(cat =>
+  // Score only assessed categories — missing sources do not contribute
+  const categories: CategoryScore[] = assessedCategories.map((cat) =>
     calculateCategoryScore(cat, categoryFindings.get(cat) ?? [])
   );
 
-  // Calculate overall score and grade
+  // Calculate overall score and grade from assessed categories only
   const overallScore = calculateOverallScore(categories);
   const overallGrade = scoreToGrade(overallScore);
-
-  // Determine which files had input
-  const inputFiles: ConfigFileType[] = (
-    Object.entries(parsedConfig.raw) as [ConfigFileType, string][]
-  )
-    .filter(([, value]) => value.trim().length > 0)
-    .map(([key]) => key);
 
   return {
     timestamp: Date.now(),
