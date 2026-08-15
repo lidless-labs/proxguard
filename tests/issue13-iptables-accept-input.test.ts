@@ -24,6 +24,9 @@ test('default-accept-input fails when iptables INPUT policy is ACCEPT and no clu
   const raw = readFixture('issue13-iptables-accept-input.iptables');
   const config = parseAllConfigs(makeInputs(raw));
 
+  // Confirm cluster.fw is absent so the test validates the iptables-only path
+  assert.equal(config.firewall, undefined, 'config.firewall must be undefined for an iptables-only input');
+
   const rule = firewallRules.find(r => r.id === 'default-accept-input');
   assert.ok(rule, 'default-accept-input rule must exist');
 
