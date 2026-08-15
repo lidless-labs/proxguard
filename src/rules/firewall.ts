@@ -54,6 +54,19 @@ pvesh set /cluster/firewall/options --enable 1
       'The default INPUT policy is ACCEPT, meaning any traffic not explicitly blocked is allowed. A secure configuration should DROP by default and only allow explicitly permitted traffic.',
     cisBenchmark: 'CIS Debian 11 - 3.5.2.4',
     test: (config) => {
+      // Check iptables INPUT chain first (applies even without cluster.fw)
+      const ipt = config.iptables;
+      if (ipt) {
+        const inputChain = ipt.chains.find(c => c.name === 'INPUT');
+        if (inputChain && inputChain.policy === 'ACCEPT') {
+          return {
+            passed: false,
+            evidence: `iptables INPUT chain default policy=ACCEPT`,
+            details: 'The iptables INPUT chain accepts all traffic by default.',
+          };
+        }
+      }
+
       const fw = config.firewall;
       if (!fw) {
         return { passed: true, evidence: 'No firewall config provided' };
@@ -66,19 +79,6 @@ pvesh set /cluster/firewall/options --enable 1
           evidence: `cluster.fw policy_in=${fw.policyIn}`,
           details: 'All inbound traffic is allowed by default. Only explicitly blocked traffic is dropped.',
         };
-      }
-
-      // Also check iptables INPUT chain
-      const ipt = config.iptables;
-      if (ipt) {
-        const inputChain = ipt.chains.find(c => c.name === 'INPUT');
-        if (inputChain && inputChain.policy === 'ACCEPT') {
-          return {
-            passed: false,
-            evidence: `iptables INPUT chain default policy=ACCEPT`,
-            details: 'The iptables INPUT chain accepts all traffic by default.',
-          };
-        }
       }
 
       return {

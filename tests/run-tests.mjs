@@ -20,6 +20,7 @@ writeFileSync(join(outDir, 'package.json'), JSON.stringify({ type: 'commonjs' })
 const testFiles = [
   join(outDir, 'tests/issue10-permit-root-login.test.js'),
   join(outDir, 'tests/issue11-missing-config.test.js'),
+  join(outDir, 'tests/issue13-iptables-accept-input.test.js'),
 ];
 
 for (const file of testFiles) {

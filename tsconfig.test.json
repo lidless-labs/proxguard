@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "CommonJS",
-    "moduleResolution": "node",
+    "moduleResolution": "node10",
     "esModuleInterop": true,
     "outDir": ".test-dist",
     "rootDir": ".",
@@ -11,7 +11,8 @@
     "declaration": false,
     "noEmit": false,
     "verbatimModuleSyntax": false,
-    "erasableSyntaxOnly": false
+    "erasableSyntaxOnly": false,
+    "types": ["node"]
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
   "exclude": ["src/**/*.tsx", "src/main.tsx", "src/App.tsx", "src/components/**", "src/variants/**"]
