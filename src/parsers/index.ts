@@ -9,6 +9,7 @@ import { parseClusterFirewall } from './clusterFw';
 import { parseIptables } from './iptables';
 import { parseLXCConfig } from './lxc';
 import { parseStorageConfig } from './storage';
+import { parsePveproxyConfig } from './pveproxy';
 
 /** True when the caller supplied non-empty content for this file type. */
 function isSupplied(
@@ -31,6 +32,7 @@ export function parseAllConfigs(inputs: Partial<Record<ConfigFileType, string>>)
     'iptables': inputs['iptables'] ?? '',
     'lxc.conf': inputs['lxc.conf'] ?? '',
     'storage.cfg': inputs['storage.cfg'] ?? '',
+    'pveproxy': inputs['pveproxy'] ?? '',
   };
 
   // Parse only supplied configs — omit truthy empty objects for missing sources
@@ -44,6 +46,7 @@ export function parseAllConfigs(inputs: Partial<Record<ConfigFileType, string>>)
   const storage = isSupplied(inputs, 'storage.cfg')
     ? parseStorageConfig(raw['storage.cfg'])
     : undefined;
+  const pveproxy = isSupplied(inputs, 'pveproxy') ? parsePveproxyConfig(raw['pveproxy']) : undefined;
 
   // Derive API config from auth tokens + relevant ACLs (only when user.cfg was supplied)
   const api: ParsedAPI | undefined = auth
@@ -64,6 +67,7 @@ export function parseAllConfigs(inputs: Partial<Record<ConfigFileType, string>>)
     api,
     storage,
     iptables,
+    pveproxy,
     raw,
   };
 }
@@ -74,3 +78,4 @@ export { parseClusterFirewall } from './clusterFw';
 export { parseIptables } from './iptables';
 export { parseLXCConfig } from './lxc';
 export { parseStorageConfig } from './storage';
+export { parsePveproxyConfig } from './pveproxy';

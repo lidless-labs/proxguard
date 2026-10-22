@@ -25,6 +25,7 @@ const checkedFiles = [
   'iptables',
   'lxc.conf',
   'storage.cfg',
+  'pveproxy',
 ] as const;
 
 type TransparencyModalProps = {

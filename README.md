@@ -31,7 +31,7 @@ It also visualizes firewall rules with drag-drop reordering and automatic confli
 ## Features
 
 - **Security Audit Engine** - Paste config files, get a letter grade with detailed findings
-- **CIS Benchmark Rules** - 16 rules mapped to CIS Debian 11 and Proxmox security standards
+- **CIS Benchmark Rules** - 17 rules mapped to CIS Debian 11 and Proxmox security standards
 - **Remediation Scripts** - Every failed check includes copy-paste shell commands to fix the issue
 - **Firewall Visualization** - Flat list view of all rules with color-coded direction indicators
 - **Drag-Drop Reordering** - Reorder rules by dragging, see impact on priority instantly
@@ -83,7 +83,8 @@ npm run build       # production build
    - `/etc/pve/user.cfg` (users, roles, 2FA)
    - `/etc/pve/storage.cfg` (NFS/CIFS mounts)
    - API token list (`pveum apitoken list`)
-3. ProxGuard parses each file, runs all 16 rules, and generates your report
+   - `/etc/default/pveproxy` (who can reach the web UI and API on port 8006, see [pveproxy(8), "Host based access control"](https://pve.proxmox.com/pve-docs/pveproxy.8.html))
+3. ProxGuard parses each file, runs every rule whose input you supplied (17 in total), and generates your report
 4. Click any finding for details, CIS reference, and remediation script
 
 No data is sent anywhere. The entire audit runs client-side in your browser.
@@ -92,7 +93,7 @@ No data is sent anywhere. The entire audit runs client-side in your browser.
 
 ## How the scoring works
 
-ProxGuard runs 16 security rules across 6 categories. Each category has a weight reflecting its risk to a Proxmox environment:
+ProxGuard runs 17 security rules across 6 categories. Each category has a weight reflecting its risk to a Proxmox environment:
 
 | Category | Weight | What It Checks |
 |----------|--------|----------------|
@@ -101,7 +102,7 @@ ProxGuard runs 16 security rules across 6 categories. Each category has a weight
 | **Authentication** | 20% | 2FA enrollment, root API tokens, overpermissive roles |
 | **Container** | 15% | Privileged containers, nesting enabled |
 | **Storage** | 10% | NFS root_squash, CIFS permissions |
-| **API** | 5% | Admin token privileges, token expiration |
+| **API** | 5% | Admin token privileges, token expiration, pveproxy access restriction |
 
 SSH and Firewall are weighted heaviest because they're the most common attack surface on internet-facing Proxmox hosts.
 
@@ -148,6 +149,7 @@ Every rule references its source standard:
 | Container Nesting Enabled | Medium | PVE-CT-002 |
 | CIFS Mount with Broad Permissions | Medium | PVE-STOR-002 |
 | API Tokens Without Expiration | Medium | PVE-API-002 |
+| Web UI and API Reachable From Any Address | Medium | PVE-API-003 |
 
 PVE-prefixed benchmarks are Proxmox-specific rules where no direct CIS mapping exists.
 
@@ -208,7 +210,7 @@ proxguard/
 │   │   ├── auth.ts               # Authentication rules (3)
 │   │   ├── container.ts          # Container security rules (2)
 │   │   ├── storage.ts            # Storage mount rules (2)
-│   │   ├── api.ts                # API token rules (2)
+│   │   ├── api.ts                # API token and pveproxy rules (3)
 │   │   └── index.ts              # Rule registry
 │   ├── store/
 │   │   ├── auditStore.ts         # Audit state and history

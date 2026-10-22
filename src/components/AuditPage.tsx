@@ -111,6 +111,14 @@ lvmthin: local-lvm
 \tvgname pve
 \tcontent rootdir,images`,
   },
+  {
+    key: 'pveproxy',
+    label: 'pveproxy',
+    placeholder: `# /etc/default/pveproxy
+ALLOW_FROM="192.0.2.0/24"
+DENY_FROM="all"
+POLICY="allow"`,
+  },
 ];
 
 // ─── Severity sort order ────────────────────────────────────────────────────
@@ -130,6 +138,13 @@ const CATEGORY_LABELS: Record<AuditCategory, string> = {
 function detectConfigType(filename: string, content: string): ConfigFileType | null {
   const lowerName = filename.toLowerCase();
   const lowerContent = content.toLowerCase();
+
+  if (
+    lowerName.includes('pveproxy') ||
+    /^\s*(ALLOW_FROM|DENY_FROM|POLICY|LISTEN_IP)\s*=/m.test(content)
+  ) {
+    return 'pveproxy';
+  }
 
   if (
     lowerName.includes('sshd') ||

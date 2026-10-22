@@ -162,4 +162,9 @@ cifs: smb-templates
 	options file_mode=0640,dir_mode=0750
 	domain CORP
 `,
+  'pveproxy': `# /etc/default/pveproxy on Proxmox VE 8.2
+# Blocks one known-bad range but still allows everything else
+DENY_FROM="198.51.100.0/24"
+POLICY="allow"
+`,
 };

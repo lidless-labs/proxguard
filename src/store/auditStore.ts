@@ -19,6 +19,7 @@ const CONFIG_FILE_TYPES: ConfigFileType[] = [
   'iptables',
   'lxc.conf',
   'storage.cfg',
+  'pveproxy',
 ];
 
 /** Create empty config inputs */
@@ -232,7 +233,8 @@ export const useAuditStore = create<AuditState>()(
       loadLastConfig: () => {
         const { lastConfigInputs } = get();
         set({
-          configInputs: { ...lastConfigInputs },
+          // Saved inputs may predate newer file types; fill any missing ones with ''
+          configInputs: { ...emptyConfigInputs(), ...lastConfigInputs },
           parsedConfig: null,
           auditReport: null,
         });

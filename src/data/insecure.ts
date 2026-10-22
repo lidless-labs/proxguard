@@ -153,4 +153,11 @@ cifs: smb-archive
 	options file_mode=0777,dir_mode=0777,sec=none
 	domain WORKGROUP
 `,
+  'pveproxy': `# /etc/default/pveproxy on Proxmox VE 8.1
+# Shipped defaults: no allow list, POLICY defaults to allow,
+# pveproxy listens on every address.
+#ALLOW_FROM="192.0.2.0/24"
+#DENY_FROM="all"
+#POLICY="allow"
+`,
 };

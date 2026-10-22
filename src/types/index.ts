@@ -21,7 +21,8 @@ export type ConfigFileType =
   | 'cluster.fw'
   | 'iptables'
   | 'lxc.conf'
-  | 'storage.cfg';
+  | 'storage.cfg'
+  | 'pveproxy';
 
 // ─── Parsed Configuration Sub-Types ────────────────────────────────────────
 
@@ -182,6 +183,16 @@ export interface ParsedIptables {
   chains: IptablesChain[];
 }
 
+/** Parsed /etc/default/pveproxy (host based access control for the web UI and API) */
+export interface ParsedPveproxy {
+  allowFrom: string | null;
+  denyFrom: string | null;
+  policy: string | null;
+  listenIp: string | null;
+  ciphers: string | null;
+  rawDirectives: Record<string, string>;
+}
+
 // ─── Top-Level Parsed Config ───────────────────────────────────────────────
 
 /** Aggregated parsed configuration from all input files */
@@ -193,6 +204,7 @@ export interface ParsedConfig {
   api?: ParsedAPI;
   storage?: ParsedStorage;
   iptables?: ParsedIptables;
+  pveproxy?: ParsedPveproxy;
   raw: Record<ConfigFileType, string>;
 }
 
@@ -216,6 +228,8 @@ export interface SecurityRule {
   remediation: string;
   remediationScript: string;
   cisBenchmark?: string;
+  /** Input file this rule needs. When it is not supplied the rule is left unevaluated. */
+  requiresInput?: ConfigFileType;
 }
 
 /** A finding is a rule paired with its evaluation result */

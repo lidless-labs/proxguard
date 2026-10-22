@@ -1,0 +1,3 @@
+# Management network only
+ALLOW_FROM="192.0.2.0/24"
+DENY_FROM="all"

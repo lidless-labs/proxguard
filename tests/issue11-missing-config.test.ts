@@ -19,6 +19,7 @@ function emptyConfigInputs(): Record<ConfigFileType, string> {
     'iptables': '',
     'lxc.conf': '',
     'storage.cfg': '',
+    'pveproxy': '',
   };
 }
 

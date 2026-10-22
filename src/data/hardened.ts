@@ -213,4 +213,10 @@ nfs: nas-iso
 	content iso,vztmpl
 	options vers=4.2,sec=krb5p,ro
 `,
+  'pveproxy': `# /etc/default/pveproxy on Proxmox VE 8.2
+# Web UI and API only from the management network
+ALLOW_FROM="192.0.2.0/24"
+DENY_FROM="all"
+POLICY="allow"
+`,
 };
