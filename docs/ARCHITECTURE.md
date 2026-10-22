@@ -1,233 +1,117 @@
 # Architecture
 
-## System Overview
+## System overview
 
-ProxGuard is a client-side firewall rule visualizer and conflict analyzer. All rules, conflict detection, and audit history are managed in the browser with Zustand, providing zero-latency interaction and full offline capability.
+ProxGuard is a client-side Proxmox VE configuration auditor. You paste or drop config files into the browser, ProxGuard parses them, runs a fixed set of security rules, scores the results and keeps a history of past audits in localStorage. There is no backend and no network call in the audit path.
 
-## Tech Stack
+## Tech stack
 
-### Frontend Only
-- **React 18** with TypeScript for type-safe UI
-- **Vite** for lightning-fast builds
-- **Tailwind CSS** for styling with 5 theme variants
-- **Zustand** with `persist` middleware for localStorage persistence
-- **React Beautiful DnD** for drag-and-drop reordering
-- Runs on **port 5190**
+- **React 19** with TypeScript, routed with **React Router 7**
+- **Vite 7** for the dev server and build
+- **Tailwind CSS 4** through `@tailwindcss/vite`, with a single theme (Analyst)
+- **Zustand 5** with the `persist` middleware for audit history
+- **Recharts** for the score trend and category radar charts
+- **jsPDF** and **html2canvas** for PDF export, loaded on demand
 
-No backend required. All data is stored in localStorage and can be exported/imported.
-
-## Data Flow
+## Audit flow
 
 ```
-Load Rules from localStorage
+Config text (pasted, or dropped and detected by name or content)
     |
     v
-Display Rule List (with conflict highlighting)
+useAuditStore.configInputs            src/store/auditStore.ts
+    |
+    v  runAudit()
+parseAllConfigs(configInputs)         src/parsers/index.ts
+    |   one parser per supplied file; unsupplied files stay undefined
+    v
+ParsedConfig
     |
     v
-User Action (drag, edit, delete)
+generateAuditReport(parsed, allRules) src/utils/scoring.ts
+    |   returns null when every input is empty
+    |   runs only the rules whose category has a supplied source
+    v
+AuditReport  ->  shown on the Audit page
     |
     v
-Conflict Detection Engine
-    |
-    v
-Update State (Zustand) -> localStorage
-    |
-    v
-Re-render with Visual Feedback
-    |
-    v
-Log Change to Audit Trail
+serialized into history (newest first, last 50 kept) -> localStorage
 ```
 
-## State Management (Zustand)
+### Inputs and parsers
 
-The main store tracks:
+`parseAllConfigs` in `src/parsers/index.ts` takes a record keyed by the six config file types and calls one parser per non-empty input:
 
-```javascript
-{
-  rules: Array<Rule>,
-  auditTrail: Array<AuditEntry>,
-  selectedRuleId: string | null,
-  conflictMap: Map<RuleId, Conflict[]>,
-  filters: {
-    direction: 'IN' | 'OUT' | 'GROUP' | null,
-    enabled: boolean | null,
-    searchTerm: string,
-  },
-  viewMode: 'list' | 'audit' | 'import-export',
-}
-```
+| Input | Parser | Feeds |
+|-------|--------|-------|
+| `sshd_config` | `src/parsers/sshd.ts` | `ssh` |
+| `user.cfg` | `src/parsers/userCfg.ts` | `auth`, and `api` (tokens and their ACLs are derived from `user.cfg`) |
+| `cluster.fw` | `src/parsers/clusterFw.ts` | `firewall` |
+| `iptables` | `src/parsers/iptables.ts` (`iptables-save` or `iptables -L -n` output) | `iptables` |
+| `lxc.conf` | `src/parsers/lxc.ts` (one or more container configs) | `containers` |
+| `storage.cfg` | `src/parsers/storage.ts` | `storage` |
 
-Persisted to localStorage under key `proxguard-v1`.
+The raw text of every input is kept on `ParsedConfig.raw` so scoring can tell which files were supplied.
 
-## Conflict Detection Engine
+### Rules
 
-The engine runs automatically whenever rules change:
+`allRules` in `src/rules/index.ts` concatenates the per-category rule lists. There are 16 rules in 6 categories:
 
-```
-For each rule in list:
-  Check against all rules with higher priority (lower index):
-    - Does it shadow this rule?
-    - Does it contradict it?
-    - Is it unreachable?
-    - Port overlap?
-    - Protocol mismatch?
-  
-  Assign conflict severity (warning / critical / info)
-  Store in conflictMap[ruleId]
-```
+| Category | File | Rules |
+|----------|------|-------|
+| `ssh` | `src/rules/ssh.ts` | 4 |
+| `auth` | `src/rules/auth.ts` | 3 |
+| `firewall` | `src/rules/firewall.ts` | 3 |
+| `container` | `src/rules/container.ts` | 2 |
+| `storage` | `src/rules/storage.ts` | 2 |
+| `api` | `src/rules/api.ts` | 2 |
 
-### Shadowing Detection
+Each rule is a `SecurityRule` (`src/types/index.ts`) with an id, category, severity, title, description, remediation text, a remediation script, a benchmark reference and a `test(parsed)` function that returns `{ passed, evidence }`.
 
-Rule B shadows Rule A if:
-1. Rule A has higher priority (earlier in list)
-2. Both rules match the same source IP
-3. Both rules match the same destination IP
-4. Both rules match the same protocol and port
-5. Rule A's action is ALLOW and Rule B's action is ALLOW (or both DENY)
+### Scoring
 
-### Contradiction Detection
+`src/utils/scoring.ts` maps supplied files to categories (`sshd_config` to ssh, `user.cfg` to auth and api, `cluster.fw` or `iptables` to firewall, `lxc.conf` to container, `storage.cfg` to storage). Only those categories are evaluated and scored.
 
-Two rules contradict if:
-1. All matching conditions are identical
-2. Actions are opposite (ALLOW vs DENY)
-3. Both rules are enabled
+- Each scored category starts at 100 and loses 40, 25, 10 or 5 points per failed critical, high, medium or info rule, with a floor of 0.
+- The overall score is the average of the scored categories weighted by `CATEGORY_WEIGHTS`: ssh 25, firewall 25, auth 20, container 15, storage 10, api 5.
+- Grades: A at 90 or more, B at 80, C at 70, D at 60, F below 60.
 
-### Unreachable Detection
+## State management
 
-A rule is unreachable if all possible traffic it could match is already handled by higher-priority rules.
+`useAuditStore` (`src/store/auditStore.ts`) holds:
 
-### Port Overlap
+| Field | Purpose | Persisted |
+|-------|---------|-----------|
+| `configInputs` | Text currently in each input tab | No |
+| `lastConfigInputs` | Inputs from the last successful audit | Yes |
+| `parsedConfig` | Output of `parseAllConfigs` | No |
+| `auditReport` | Current `AuditReport` | No |
+| `history` | Serialized past reports, newest first, capped at 50 | Yes |
+| `isAuditing` | Loading flag while the audit runs | No |
+| `comparisonPair` | Timestamps of the two reports being compared | Yes |
 
-Detected when:
-1. Rules have overlapping port ranges
-2. Both match the same protocol
-3. Different actions without clear separation
+Actions: `setConfigInput`, `runAudit`, `loadSample`, `loadLastConfig`, `clearResults`, `clearHistory`, `deleteHistoryEntry`, `setComparisonPair`, `clearComparison`.
 
-## Rule Model
+History entries store each rule's metadata without its `test` function. `hydrateStoredReport` reattaches the current rule by id, or a placeholder rule when the id no longer exists. Older summary-only entries are still accepted but cannot be compared.
 
-```typescript
-interface Rule {
-  id: string;              // UUID
-  name: string;
-  direction: 'IN' | 'OUT' | 'GROUP';
-  source: {
-    type: 'ip' | 'subnet' | 'any';
-    value?: string;
-  };
-  dest: {
-    type: 'ip' | 'subnet' | 'any';
-    value?: string;
-  };
-  protocol: 'tcp' | 'udp' | 'icmp' | 'any';
-  port?: number | { start: number; end: number };
-  action: 'ALLOW' | 'DENY' | 'REJECT' | 'DROP';
-  enabled: boolean;
-  priority: number;         // Lower = higher priority
-  tags: string[];
-  notes: string;
-  created_at: Date;
-  modified_at: Date;
-}
-```
+## Pages and routes
 
-## Conflict Model
+Routes are declared in `src/App.tsx`:
 
-```typescript
-interface Conflict {
-  id: string;
-  type: 'shadowing' | 'contradiction' | 'unreachable' | 'port_overlap' | 'protocol_mismatch';
-  severity: 'info' | 'warning' | 'critical';
-  affectedRules: string[];  // Rule IDs involved
-  description: string;
-  suggestion?: string;
-}
-```
+| Path | Component | What it shows |
+|------|-----------|---------------|
+| `/` | `DashboardPage` | Last audit, score trend, demo config shortcuts |
+| `/audit` | `AuditPage` | Config input with file drop, results, remediation script, PDF export |
+| `/history` | `HistoryPage` | Past audits; delete entries or select two to compare |
+| `/compare` | `ComparisonPage` | Category score deltas and findings that changed between two audits |
+| `/compliance` | `CompliancePage` | Pass/fail for each benchmark-mapped check in the current audit |
 
-## Audit Trail
+`src/App.tsx` also holds the header, navigation and a transparency modal that lists the checked files and rule counts by category and severity, computed from `allRules`.
 
-```typescript
-interface AuditEntry {
-  id: string;
-  timestamp: Date;
-  user: string;              // From localStorage or user setting
-  action: 'create' | 'update' | 'delete' | 'reorder' | 'bulk_edit' | 'import';
-  affectedRules: string[];
-  changeset: {
-    before: Partial<Rule> | Rule[];
-    after: Partial<Rule> | Rule[];
-  };
-  description: string;
-}
-```
+## Demo data
 
-Immutable log in localStorage under `proxguard-audit-v1`.
+`src/data/` holds three sample input sets (`insecure`, `partial`, `hardened`) loaded through `getSample` and `loadSample`. With the current rules they score 38 (F), 74 (C) and 100 (A).
 
-## Drag-and-Drop Reordering
+## Theme
 
-Uses `react-beautiful-dnd` for accessible drag-and-drop:
-
-1. User drags rule from position N to position M
-2. Local array is reordered
-3. Conflict detection runs on new ordering
-4. Changes are persisted to localStorage
-5. Audit trail entry is created with before/after state
-
-The DnD interface respects rule groups and respects dependencies (rules with cross-references).
-
-## Import/Export
-
-### Supported Formats
-
-**JSON** (native)
-```json
-{
-  "version": 1,
-  "rules": [...],
-  "exportedAt": "2026-02-09T10:00:00Z"
-}
-```
-
-**CSV**
-```
-name,direction,source,dest,protocol,port,action,enabled
-Allow SSH from Admin,IN,203.0.113.10,any,tcp,22,ALLOW,true
-```
-
-**Palo Alto XML** (read-only)
-```xml
-<rules>
-  <rule>...</rule>
-</rules>
-```
-
-**Proxmox CLI Format** (export)
-```bash
-proxmox firewall enable
-proxmox firewall rule add IN ALLOW -p tcp -dport 22 -source 203.0.113.10
-```
-
-## 5 Variants
-
-Each variant provides a unique visual identity over the same core engine:
-
-| Variant | Theme | Use Case |
-|---------|-------|----------|
-| **Tactical** | Dark slate, red accents | Security operations |
-| **Analyst** | Light white, blue accents | Policy review |
-| **Terminal** | Black, matrix green | Technical analysis |
-| **Command** | OD green, amber | Military-style |
-| **Cyber** | Neon cyan/magenta | Cyberpunk aesthetic |
-
-Switching themes is instant. All state persists across theme changes.
-
-## Offline-First Architecture
-
-ProxGuard is 100% offline:
-1. Rules loaded from localStorage on startup
-2. All edits are instant (no network calls)
-3. Export rules to backup when needed
-4. Import from Proxmox API or previous exports
-
-Optional: Connect to a Proxmox API backend (not included) to fetch and sync live rules.
+`src/variants/themes.ts` defines one theme, Analyst (light background, blue accents). `src/variants/ThemeProvider.tsx` applies its CSS custom properties to the document root and exposes it through `useTheme`. There is no theme switcher.
