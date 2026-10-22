@@ -58,6 +58,22 @@ Open **http://localhost:5190**
 
 ---
 
+## Development
+
+Requires Node 22 or newer.
+
+```bash
+npm ci              # install exact dependencies
+npm run lint        # ESLint
+npm run typecheck   # TypeScript project check, no output
+npm test            # compile and run every tests/*.test.ts with node:test
+npm run build       # production build
+```
+
+`npm test` compiles into `.test-dist/` (gitignored) and picks up any new `tests/*.test.ts` file on its own. CI runs the same five steps on every pull request and on pushes to `main`.
+
+---
+
 ## Running an audit
 
 1. Navigate to the **Audit** tab

@@ -1,14 +1,16 @@
 /**
  * Test runner: compile TypeScript (no new deps) then run node:test against .test-dist.
+ * Every tests/*.test.ts file is discovered automatically after compilation.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(root);
 const outDir = join(repoRoot, '.test-dist');
+const compiledTestsDir = join(outDir, 'tests');
 
 execFileSync('npx', ['tsc', '-p', join(repoRoot, 'tsconfig.test.json')], {
   cwd: repoRoot,
@@ -17,16 +19,15 @@ execFileSync('npx', ['tsc', '-p', join(repoRoot, 'tsconfig.test.json')], {
 
 writeFileSync(join(outDir, 'package.json'), JSON.stringify({ type: 'commonjs' }));
 
-const testFiles = [
-  join(outDir, 'tests/issue10-permit-root-login.test.js'),
-  join(outDir, 'tests/issue11-missing-config.test.js'),
-  join(outDir, 'tests/issue13-iptables-accept-input.test.js'),
-];
+const testFiles = existsSync(compiledTestsDir)
+  ? readdirSync(compiledTestsDir)
+      .filter((name) => name.endsWith('.test.js'))
+      .sort()
+      .map((name) => join(compiledTestsDir, name))
+  : [];
 
-for (const file of testFiles) {
-  if (!existsSync(file)) {
-    throw new Error(`compiled test missing: ${file}`);
-  }
+if (testFiles.length === 0) {
+  throw new Error(`no compiled tests found in ${compiledTestsDir}`);
 }
 
 execFileSync('node', ['--test', ...testFiles], {

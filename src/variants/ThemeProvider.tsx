@@ -14,6 +14,7 @@ const ThemeContext = createContext<VariantTheme | null>(null);
  * Hook to access the current theme.
  * Must be used within a <ThemeProvider>.
  */
+// eslint-disable-next-line react-refresh/only-export-components -- hook is colocated with its provider; HMR falls back to a full reload for this file
 export function useTheme(): VariantTheme {
   const ctx = useContext(ThemeContext);
   if (!ctx) {
