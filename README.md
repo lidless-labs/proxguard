@@ -80,7 +80,8 @@ npm run build       # production build
 2. Paste your Proxmox config files:
    - `/etc/ssh/sshd_config` (SSH hardening)
    - `/etc/pve/firewall/cluster.fw` (firewall rules)
-   - `/etc/pve/user.cfg` (users, roles, 2FA)
+   - `/etc/pve/user.cfg` (users, roles, API tokens)
+   - Output of `pveum user tfa list --output-format json` (2FA status per user, on the **tfa.json** tab). It lists factor types only and holds no secrets. Proxmox keeps second factors outside `user.cfg`, so without this input the 2FA check shows as **Not evaluated** and costs no points
    - `/etc/pve/storage.cfg` (NFS/CIFS mounts)
    - API token list (`pveum apitoken list`)
 3. ProxGuard parses each file, runs all 16 rules, and generates your report

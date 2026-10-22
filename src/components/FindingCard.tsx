@@ -1,13 +1,14 @@
 /**
  * Finding card component — theme-aware.
- * Shows a security finding with severity, pass/fail status, evidence,
- * and expandable remediation with copy button.
+ * Shows a security finding with severity, pass/fail/not-evaluated status,
+ * evidence, and expandable remediation with copy button.
  */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle,
   XCircle,
+  CircleMinus,
   ChevronDown,
   ChevronUp,
   Copy,
@@ -28,6 +29,9 @@ export function FindingCard({ finding }: FindingCardProps) {
   const [copied, setCopied] = useState(false);
   const { rule, result } = finding;
   const theme = useTheme();
+  // Skipped results are neutral: no deduction and no remediation to apply
+  const skipped = result.skipped === true;
+  const muted = result.passed || skipped;
 
   const handleCopy = async () => {
     try {
@@ -50,7 +54,7 @@ export function FindingCard({ finding }: FindingCardProps) {
     <div
       className={`
         border rounded-lg overflow-hidden transition-colors
-        ${result.passed
+        ${muted
           ? `${theme.classes.card} ${theme.classes.cardBorder} opacity-70`
           : `${theme.classes.card} ${theme.classes.cardBorder}`
         }
@@ -61,8 +65,10 @@ export function FindingCard({ finding }: FindingCardProps) {
         onClick={() => setExpanded(!expanded)}
         className="w-full px-4 py-3 flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
       >
-        {/* Pass/Fail icon */}
-        {result.passed ? (
+        {/* Pass/Fail/Not evaluated icon */}
+        {skipped ? (
+          <CircleMinus className={`w-5 h-5 ${theme.classes.textSecondary} shrink-0`} />
+        ) : result.passed ? (
           <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
         ) : (
           <XCircle className="w-5 h-5 text-red-400 shrink-0" />
@@ -71,8 +77,15 @@ export function FindingCard({ finding }: FindingCardProps) {
         {/* Severity badge */}
         <SeverityBadge severity={rule.severity} />
 
+        {/* Neutral badge when the rule could not be evaluated */}
+        {skipped && (
+          <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider inline-flex items-center bg-slate-500/20 ${theme.classes.textSecondary}`}>
+            Not evaluated
+          </span>
+        )}
+
         {/* Title */}
-        <span className={`text-sm font-medium flex-1 ${result.passed ? theme.classes.textSecondary : theme.classes.textPrimary}`}
+        <span className={`text-sm font-medium flex-1 ${muted ? theme.classes.textSecondary : theme.classes.textPrimary}`}
           style={{ fontFamily: theme.fonts.body }}
         >
           {rule.title}
@@ -132,7 +145,7 @@ export function FindingCard({ finding }: FindingCardProps) {
               )}
 
               {/* Remediation (only for failed findings) */}
-              {!result.passed && (
+              {!result.passed && !skipped && (
                 <div className="space-y-2">
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                     <span className="text-xs font-semibold text-blue-400 uppercase mb-1 block">

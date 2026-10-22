@@ -5,7 +5,14 @@ import { useTheme } from '../variants/ThemeProvider';
 import { SeverityBadge } from './SeverityBadge';
 import type { Finding } from '../types';
 
-function PassFailBadge({ passed }: { passed: boolean }) {
+function PassFailBadge({ passed, skipped }: { passed: boolean; skipped?: boolean }) {
+  if (skipped) {
+    return (
+      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-slate-500/20 text-slate-400">
+        N/A
+      </span>
+    );
+  }
   return (
     <span
       className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
@@ -36,8 +43,10 @@ export function CompliancePage() {
   }, {});
 
   const sortedBenchmarkIds = Object.keys(groupedMappedFindings).sort((a, b) => a.localeCompare(b));
-  const passingMapped = mappedFindings.filter((f) => f.result.passed).length;
-  const totalMapped = mappedFindings.length;
+  // Not-evaluated checks are neither passing nor failing, so they stay out of the percentage
+  const evaluatedMapped = mappedFindings.filter((f) => !f.result.skipped);
+  const passingMapped = evaluatedMapped.filter((f) => f.result.passed).length;
+  const totalMapped = evaluatedMapped.length;
   const compliancePercent = totalMapped === 0 ? 0 : Math.round((passingMapped / totalMapped) * 100);
 
   return (
@@ -84,7 +93,7 @@ export function CompliancePage() {
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <p className={`font-medium ${theme.classes.textPrimary}`}>{finding.rule.title}</p>
                         <div className="flex items-center gap-2">
-                          <PassFailBadge passed={finding.result.passed} />
+                          <PassFailBadge passed={finding.result.passed} skipped={finding.result.skipped} />
                           <SeverityBadge severity={finding.rule.severity} />
                         </div>
                       </div>
@@ -118,7 +127,7 @@ export function CompliancePage() {
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <p className={`font-medium ${theme.classes.textPrimary}`}>{finding.rule.title}</p>
                   <div className="flex items-center gap-2">
-                    <PassFailBadge passed={finding.result.passed} />
+                    <PassFailBadge passed={finding.result.passed} skipped={finding.result.skipped} />
                     <SeverityBadge severity={finding.rule.severity} />
                   </div>
                 </div>
