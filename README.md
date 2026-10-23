@@ -20,7 +20,7 @@
 
 ## What it does
 
-ProxGuard parses Proxmox configuration you paste or drop into the browser (sshd_config, user.cfg, cluster.fw, iptables output, LXC container configs and storage.cfg) and grades your security posture across six categories. Every rule traces back to a CIS Benchmark or a Proxmox-specific check. Failed checks include remediation steps and copy-paste shell commands to fix the issue.
+ProxGuard parses Proxmox configuration you paste or drop into the browser (sshd_config, user.cfg, cluster.fw, iptables output, LXC container configs, storage.cfg, tfa.json and pveproxy) and grades your security posture across six categories. Every rule traces back to a CIS Benchmark or a Proxmox-specific check. Failed checks include remediation steps and copy-paste shell commands to fix the issue.
 
 ![ProxGuard](docs/screenshots/dashboard.png)
 
@@ -29,12 +29,12 @@ ProxGuard parses Proxmox configuration you paste or drop into the browser (sshd_
 ## Features
 
 - **Security Audit Engine** - Paste or drop config files, get a letter grade with detailed findings
-- **CIS Benchmark Rules** - 16 rules in 6 categories, mapped to CIS Debian 11 and Proxmox-specific checks
+- **CIS Benchmark Rules** - 17 rules in 6 categories, mapped to CIS Debian 11 and Proxmox-specific checks
 - **Scoped Scoring** - Only categories you supplied input for are scored, so a missing file never counts as a pass or a fail
 - **Remediation Scripts** - Every failed check includes copy-paste shell commands, and the Script Generator combines them into one downloadable `.sh` with a `--dry-run` mode and per-fix confirmation
-- **File Drop** - Drop config files onto the input panel; ProxGuard detects the file type by name or content and asks when it can't tell
+- **File Drop** - Drop config files onto the input panel. ProxGuard detects the file type by name or content and asks when it can't tell
 - **Dashboard** - Last audit, score trend over recent audits and quick links to the demo configs
-- **History** - The last 50 audits are kept in your browser; delete entries or pick two to compare
+- **History** - The last 50 audits are kept in your browser. Delete entries or pick two to compare
 - **Comparison** - Score change per category and which findings flipped between two audits
 - **Compliance View** - Pass/fail status of every benchmark-mapped check in the current audit
 - **PDF Export** - Save the results panel as a multi-page PDF report
@@ -51,7 +51,7 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:5173** (Vite's default port; `vite.config.ts` does not set one).
+Open **http://localhost:5173** (Vite's default port. `vite.config.ts` does not set one).
 
 ---
 
@@ -77,12 +77,14 @@ npm run build       # production build
 1. Open the **Audit** page
 2. Paste or drop any of these into their tabs:
    - `/etc/ssh/sshd_config` (SSH hardening)
-   - `/etc/pve/user.cfg` (users, groups, ACLs, 2FA and API tokens)
+   - `/etc/pve/user.cfg` (users, groups, ACLs and API tokens)
    - `/etc/pve/firewall/cluster.fw` (cluster firewall options and rules)
    - `iptables-save` or `iptables -L -n -v` output (host firewall policy)
    - `/etc/pve/lxc/<vmid>.conf` (one or more container configs)
    - `/etc/pve/storage.cfg` (NFS and CIFS mounts)
-3. Run the audit. ProxGuard parses each file you supplied, runs the rules for those categories, and generates your report
+   - Output of `pveum user tfa list --output-format json` on the **tfa.json** tab (second-factor metadata without secrets). Supply it alongside `user.cfg` to evaluate 2FA enrollment
+   - `/etc/default/pveproxy` (web UI and API access restrictions on port 8006)
+3. Run the audit. ProxGuard parses each file you supplied, runs the rules whose required inputs are present, and generates your report
 4. Click any finding for evidence, the CIS reference and remediation commands
 
 No data is sent anywhere. The entire audit runs client-side in your browser.
@@ -91,18 +93,18 @@ No data is sent anywhere. The entire audit runs client-side in your browser.
 
 ## How the scoring works
 
-ProxGuard has 16 security rules across 6 categories. Each category has a weight reflecting its risk to a Proxmox environment:
+ProxGuard has 17 security rules across 6 categories. Each category has a weight reflecting its risk to a Proxmox environment:
 
 | Category | Weight | Source file | What It Checks |
 |----------|--------|-------------|----------------|
 | **SSH** | 25% | sshd_config | Root login, password auth, default port, max auth tries |
 | **Firewall** | 25% | cluster.fw, iptables | Cluster firewall enabled, default INPUT policy, rule existence |
-| **Authentication** | 20% | user.cfg | 2FA enrollment, root API tokens, Administrator role grants |
+| **Authentication** | 20% | user.cfg, tfa.json | 2FA enrollment, root API tokens, Administrator role grants |
 | **Container** | 15% | lxc.conf | Privileged containers, nesting enabled |
 | **Storage** | 10% | storage.cfg | NFS root_squash, CIFS permissions |
-| **API** | 5% | user.cfg | Admin token privileges, token expiration |
+| **API** | 5% | user.cfg, pveproxy | Admin token privileges, token expiration, pveproxy access restriction |
 
-SSH and Firewall are weighted heaviest because they're the most common attack surface on internet-facing Proxmox hosts. A category is only scored when its source file was supplied, and the overall score is the weighted average of the scored categories.
+SSH and Firewall are weighted heaviest because they're the most common attack surface on internet-facing Proxmox hosts. Rules requiring `user.cfg` or `pveproxy` run only when that input is present. The 2FA check shows **Not evaluated** unless both usable TFA metadata and a user list are available, and skipped checks cost no points. A category is scored only when at least one check was evaluated. The overall score is the weighted average of those categories. TFA metadata alone produces skipped evidence, no scored categories and an overall score of 0.
 
 ### Deductions
 
@@ -113,7 +115,7 @@ Each category starts at 100. Each failed rule deducts from its category score ba
 | **Critical** | -40 | Root SSH with password auth enabled |
 | **High** | -25 | Users without two-factor authentication |
 | **Medium** | -10 | SSH on default port 22 |
-| **Info** | -5 | Defined in the scoring engine; no current rule uses it |
+| **Info** | -5 | Defined in the scoring engine. No current rule uses it |
 
 The overall score maps to a grade:
 
@@ -147,6 +149,7 @@ Every rule references its source standard:
 | Container Nesting Enabled | Medium | PVE-CT-002 |
 | CIFS Mount with Broad Permissions | Medium | PVE-STOR-002 |
 | API Tokens Without Expiration | Medium | PVE-API-002 |
+| Web UI and API Reachable From Any Address | Medium | PVE-API-003 |
 
 PVE-prefixed benchmarks are Proxmox-specific rules where no direct CIS mapping exists.
 
@@ -199,14 +202,16 @@ proxguard/
 │   │   ├── clusterFw.ts          # cluster.fw
 │   │   ├── iptables.ts           # iptables-save and iptables -L output
 │   │   ├── lxc.ts                # LXC container configs
-│   │   └── storage.ts            # storage.cfg
+│   │   ├── storage.ts            # storage.cfg
+│   │   ├── tfa.ts                # tfa.json metadata
+│   │   └── pveproxy.ts           # pveproxy access controls
 │   ├── rules/
 │   │   ├── ssh.ts                # SSH hardening rules (4)
 │   │   ├── firewall.ts           # Firewall rules (3)
 │   │   ├── auth.ts               # Authentication rules (3)
 │   │   ├── container.ts          # Container security rules (2)
 │   │   ├── storage.ts            # Storage mount rules (2)
-│   │   ├── api.ts                # API token rules (2)
+│   │   ├── api.ts                # API token and pveproxy rules (3)
 │   │   └── index.ts              # allRules registry
 │   ├── store/
 │   │   └── auditStore.ts         # Zustand store, persisted history

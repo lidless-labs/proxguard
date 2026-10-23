@@ -17,6 +17,8 @@ function makeInputs(iptables: string): Record<ConfigFileType, string> {
     'iptables': iptables,
     'lxc.conf': '',
     'storage.cfg': '',
+    'pveproxy': '',
+    'tfa.json': '',
   };
 }
 

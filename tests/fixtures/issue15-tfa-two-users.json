@@ -1,0 +1,18 @@
+[
+  {
+    "userid": "alice@pve",
+    "entries": [
+      { "id": "webauthn/a1b2c3", "type": "webauthn", "description": "Security key", "created": 1729500000, "enable": true },
+      { "id": "recovery", "type": "recovery", "description": "Recovery keys", "created": 1729500000, "enable": true }
+    ],
+    "totp-locked": false
+  },
+  {
+    "userid": "bob@pve",
+    "entries": [
+      { "id": "totp/d4e5f6", "type": "totp", "description": "Authenticator app", "created": 1729500100, "enable": true }
+    ],
+    "totp-locked": false,
+    "tfa-locked-until": 1729600000
+  }
+]

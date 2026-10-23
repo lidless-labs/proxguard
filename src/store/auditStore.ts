@@ -19,6 +19,8 @@ const CONFIG_FILE_TYPES: ConfigFileType[] = [
   'iptables',
   'lxc.conf',
   'storage.cfg',
+  'pveproxy',
+  'tfa.json',
 ];
 
 /** Create empty config inputs */
@@ -232,7 +234,8 @@ export const useAuditStore = create<AuditState>()(
       loadLastConfig: () => {
         const { lastConfigInputs } = get();
         set({
-          configInputs: { ...lastConfigInputs },
+          // Saved inputs may predate newer file types; fill any missing ones with ''
+          configInputs: { ...emptyConfigInputs(), ...lastConfigInputs },
           parsedConfig: null,
           auditReport: null,
         });
@@ -277,8 +280,9 @@ export const useAuditStore = create<AuditState>()(
         comparisonPair: state.comparisonPair,
         lastConfigInputs: state.lastConfigInputs,
       }),
-      // Gracefully migrate old summary history entries (v0) to union format (v1)
-      version: 1,
+      // Gracefully migrate old summary history entries (v0) to union format (v1);
+      // v2 adds the tfa.json input, so older saved inputs gain the missing keys
+      version: 2,
       migrate: (persistedState, version) => {
         if (!persistedState || typeof persistedState !== 'object') return persistedState;
 
@@ -305,7 +309,10 @@ export const useAuditStore = create<AuditState>()(
           comparisonPair: Array.isArray(state.comparisonPair) ? state.comparisonPair : null,
           lastConfigInputs:
             state.lastConfigInputs && typeof state.lastConfigInputs === 'object'
-              ? (state.lastConfigInputs as Record<ConfigFileType, string>)
+              ? {
+                  ...emptyConfigInputs(),
+                  ...(state.lastConfigInputs as Partial<Record<ConfigFileType, string>>),
+                }
               : emptyConfigInputs(),
         };
       },

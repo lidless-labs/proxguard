@@ -12,12 +12,12 @@ const repoRoot = join(__dirname, '../..');
 const readme = readFileSync(join(repoRoot, 'README.md'), 'utf8');
 
 /** Body rows of the first markdown table after a heading, as trimmed cells. */
-function tableAfter(heading: string): string[][] {
-  const start = readme.indexOf(heading);
+function tableAfter(heading: string, text = readme): string[][] {
+  const start = text.indexOf(heading);
   assert.notEqual(start, -1, `README has no "${heading}" heading`);
 
   const rows: string[][] = [];
-  for (const line of readme.slice(start).split('\n').slice(1)) {
+  for (const line of text.slice(start).split('\n').slice(1)) {
     if (line.startsWith('|')) {
       rows.push(line.split('|').slice(1, -1).map((cell) => cell.trim()));
     } else if (rows.length > 0) {
@@ -73,4 +73,18 @@ test('README category weights match CATEGORY_WEIGHTS', () => {
   }
 
   assert.deepEqual(documented, actual);
+});
+
+
+test('architecture rule counts match the current registry by category', () => {
+  const architecture = readFileSync(join(repoRoot, 'docs/ARCHITECTURE.md'), 'utf8');
+  const actual: Record<string, number> = {};
+  for (const rule of allRules) actual[rule.category] = (actual[rule.category] ?? 0) + 1;
+  const documented = Object.fromEntries(
+    tableAfter('### Rules', architecture).map(([category, , count]) => [
+      category.replace(/`/g, ''), Number(count),
+    ]),
+  );
+  assert.deepEqual(documented, actual);
+  assert.match(architecture, new RegExp(`There are ${allRules.length} rules in ${Object.keys(actual).length} categories`));
 });

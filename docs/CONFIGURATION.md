@@ -28,13 +28,13 @@ ProxGuard keeps its state in browser localStorage under one key, written by the 
 
 | Key | Contents |
 |-----|----------|
-| `proxguard-storage` | `{ state: { history, comparisonPair, lastConfigInputs }, version: 1 }` |
+| `proxguard-storage` | `{ state: { history, comparisonPair, lastConfigInputs }, version: 2 }` |
 
 - `history`: up to 50 serialized audit reports, newest first. Each holds the timestamp, overall score and grade, category scores, findings with rule metadata, and the list of input files that were supplied.
 - `comparisonPair`: timestamps of the two reports open on the Compare page, or `null`.
-- `lastConfigInputs`: the config text from the last successful audit, used by **Load Last Config** on the Dashboard.
+- `lastConfigInputs`: the config text from the last successful audit, including `tfa.json` and `pveproxy`, used by **Load Last Config** on the Dashboard. Older saved input sets keep their existing values and gain empty fields for missing input types when restored.
 
-The text you paste into the input tabs is not persisted until an audit runs. Clearing history on the History page empties `history` and `comparisonPair` but keeps `lastConfigInputs`; clearing site data in the browser removes the key entirely.
+The text you paste into the input tabs is not persisted until an audit runs. Clearing history on the History page empties `history` and `comparisonPair` but keeps `lastConfigInputs`. Clearing site data in the browser removes the key entirely.
 
 ## Theme
 

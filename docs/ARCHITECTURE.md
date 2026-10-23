@@ -30,7 +30,7 @@ ParsedConfig
     v
 generateAuditReport(parsed, allRules) src/utils/scoring.ts
     |   returns null when every input is empty
-    |   runs only the rules whose category has a supplied source
+    |   runs rules for supplied categories, respecting each rule's required input
     v
 AuditReport  ->  shown on the Audit page
     |
@@ -40,7 +40,7 @@ serialized into history (newest first, last 50 kept) -> localStorage
 
 ### Inputs and parsers
 
-`parseAllConfigs` in `src/parsers/index.ts` takes a record keyed by the six config file types and calls one parser per non-empty input:
+`parseAllConfigs` in `src/parsers/index.ts` takes a record keyed by the eight config file types and calls one parser per non-empty input:
 
 | Input | Parser | Feeds |
 |-------|--------|-------|
@@ -50,12 +50,14 @@ serialized into history (newest first, last 50 kept) -> localStorage
 | `iptables` | `src/parsers/iptables.ts` (`iptables-save` or `iptables -L -n` output) | `iptables` |
 | `lxc.conf` | `src/parsers/lxc.ts` (one or more container configs) | `containers` |
 | `storage.cfg` | `src/parsers/storage.ts` | `storage` |
+| `tfa.json` | `src/parsers/tfa.ts` (`pveum user tfa list --output-format json`) | `tfa` |
+| `pveproxy` | `src/parsers/pveproxy.ts` (`/etc/default/pveproxy`) | `pveproxy` |
 
 The raw text of every input is kept on `ParsedConfig.raw` so scoring can tell which files were supplied.
 
 ### Rules
 
-`allRules` in `src/rules/index.ts` concatenates the per-category rule lists. There are 16 rules in 6 categories:
+`allRules` in `src/rules/index.ts` concatenates the per-category rule lists. There are 17 rules in 6 categories:
 
 | Category | File | Rules |
 |----------|------|-------|
@@ -64,13 +66,13 @@ The raw text of every input is kept on `ParsedConfig.raw` so scoring can tell wh
 | `firewall` | `src/rules/firewall.ts` | 3 |
 | `container` | `src/rules/container.ts` | 2 |
 | `storage` | `src/rules/storage.ts` | 2 |
-| `api` | `src/rules/api.ts` | 2 |
+| `api` | `src/rules/api.ts` | 3 |
 
-Each rule is a `SecurityRule` (`src/types/index.ts`) with an id, category, severity, title, description, remediation text, a remediation script, a benchmark reference and a `test(parsed)` function that returns `{ passed, evidence }`.
+Each rule is a `SecurityRule` (`src/types/index.ts`) with an id, category, severity, title, description, remediation text, a remediation script, a benchmark reference and a `test(parsed)` function that returns `{ passed, evidence }` with optional `details` and `skipped` fields. Rules can declare `requiresInput` to restrict evaluation to their source file.
 
 ### Scoring
 
-`src/utils/scoring.ts` maps supplied files to categories (`sshd_config` to ssh, `user.cfg` to auth and api, `cluster.fw` or `iptables` to firewall, `lxc.conf` to container, `storage.cfg` to storage). Only those categories are evaluated and scored.
+`src/utils/scoring.ts` maps supplied files to categories (`sshd_config` to ssh, `user.cfg` to auth and api, `cluster.fw` or `iptables` to firewall, `lxc.conf` to container, `storage.cfg` to storage, `tfa.json` to auth, `pveproxy` to api). Rules requiring a specific input are omitted when that file is missing. The 2FA rule needs both TFA metadata and the user list and reports a neutral skip when either is absent. Malformed TFA JSON does not count as supplied input. Categories with no evaluated findings are excluded from scoring, so TFA-only input has no scored categories and an overall score of 0.
 
 - Each scored category starts at 100 and loses 40, 25, 10 or 5 points per failed critical, high, medium or info rule, with a floor of 0.
 - The overall score is the average of the scored categories weighted by `CATEGORY_WEIGHTS`: ssh 25, firewall 25, auth 20, container 15, storage 10, api 5.
@@ -102,7 +104,7 @@ Routes are declared in `src/App.tsx`:
 |------|-----------|---------------|
 | `/` | `DashboardPage` | Last audit, score trend, demo config shortcuts |
 | `/audit` | `AuditPage` | Config input with file drop, results, remediation script, PDF export |
-| `/history` | `HistoryPage` | Past audits; delete entries or select two to compare |
+| `/history` | `HistoryPage` | Past audits. Delete entries or select two to compare |
 | `/compare` | `ComparisonPage` | Category score deltas and findings that changed between two audits |
 | `/compliance` | `CompliancePage` | Pass/fail for each benchmark-mapped check in the current audit |
 
@@ -110,7 +112,7 @@ Routes are declared in `src/App.tsx`:
 
 ## Demo data
 
-`src/data/` holds three sample input sets (`insecure`, `partial`, `hardened`) loaded through `getSample` and `loadSample`. With the current rules they score 38 (F), 74 (C) and 100 (A).
+`src/data/` holds three sample input sets (`insecure`, `partial`, `hardened`) loaded through `getSample` and `loadSample`. With the current rules they score 37 (F), 74 (C) and 100 (A).
 
 ## Theme
 

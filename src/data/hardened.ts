@@ -75,13 +75,6 @@ acl:1:/:readonly@pve:PVEAuditor:
 
 token:monitor@pve:grafana:1739404800:1:Grafana monitoring — expires 2025-02-13:
 token:devops@pve:ansible:1742083200:1:Ansible automation — expires 2025-03-16:
-
-tfa:root@pam:totp:
-tfa:admin@pve:webauthn:
-tfa:operator@pve:totp:
-tfa:devops@pve:totp:
-tfa:monitor@pve:totp:
-tfa:readonly@pve:totp:
 `,
 
   'cluster.fw': `# Proxmox VE Cluster Firewall Configuration
@@ -212,5 +205,88 @@ nfs: nas-iso
 	export /volume1/iso-library
 	content iso,vztmpl
 	options vers=4.2,sec=krb5p,ro
+`,
+  'pveproxy': `# /etc/default/pveproxy on Proxmox VE 8.2
+# Web UI and API only from the management network
+ALLOW_FROM="192.0.2.0/24"
+DENY_FROM="all"
+POLICY="allow"
+`,
+
+  // pveum user tfa list --output-format json
+  'tfa.json': `[
+  {
+    "userid": "root@pam",
+    "entries": [
+      {
+        "id": "totp/0c3e55",
+        "type": "totp",
+        "description": "Break-glass authenticator",
+        "enable": true
+      },
+      {
+        "id": "recovery",
+        "type": "recovery",
+        "description": "Recovery keys",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "admin@pve",
+    "entries": [
+      {
+        "id": "webauthn/9b7f20",
+        "type": "webauthn",
+        "description": "Security key",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "operator@pve",
+    "entries": [
+      {
+        "id": "totp/5a91d4",
+        "type": "totp",
+        "description": "Authenticator app",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "devops@pve",
+    "entries": [
+      {
+        "id": "totp/e7c218",
+        "type": "totp",
+        "description": "Authenticator app",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "monitor@pve",
+    "entries": [
+      {
+        "id": "totp/14f6b3",
+        "type": "totp",
+        "description": "Service owner phone",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "readonly@pve",
+    "entries": [
+      {
+        "id": "totp/c3d870",
+        "type": "totp",
+        "description": "Authenticator app",
+        "enable": true
+      }
+    ]
+  }
+]
 `,
 };

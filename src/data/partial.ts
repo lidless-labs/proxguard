@@ -55,9 +55,6 @@ acl:1:/:readonly@pve:PVEAuditor:
 
 token:admin@pve:terraform:0:1:Terraform provisioning:
 token:devops@pve:ansible:0:1:Ansible automation:
-
-tfa:admin@pve:totp:
-tfa:operator@pve:totp:
 `,
 
   'cluster.fw': `# Proxmox VE Cluster Firewall Configuration
@@ -161,5 +158,54 @@ cifs: smb-templates
 	username pvebackup
 	options file_mode=0640,dir_mode=0750
 	domain CORP
+`,
+  'pveproxy': `# /etc/default/pveproxy on Proxmox VE 8.2
+# Blocks one known-bad range but still allows everything else
+DENY_FROM="198.51.100.0/24"
+POLICY="allow"
+`,
+
+  // pveum user tfa list --output-format json
+  'tfa.json': `[
+  {
+    "userid": "admin@pve",
+    "entries": [
+      {
+        "id": "totp/8d02e1",
+        "type": "totp",
+        "description": "Authenticator app",
+        "enable": true
+      },
+      {
+        "id": "recovery",
+        "type": "recovery",
+        "description": "Recovery keys",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "operator@pve",
+    "entries": [
+      {
+        "id": "totp/41ab7c",
+        "type": "totp",
+        "description": "Authenticator app",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "readonly@pve",
+    "entries": [
+      {
+        "id": "recovery",
+        "type": "recovery",
+        "description": "Recovery keys",
+        "enable": true
+      }
+    ]
+  }
+]
 `,
 };

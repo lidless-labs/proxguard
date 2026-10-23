@@ -16,6 +16,8 @@ const EMPTY_RAW: Record<ConfigFileType, string> = {
   'iptables': '',
   'lxc.conf': '',
   'storage.cfg': '',
+  'pveproxy': '',
+  'tfa.json': '',
 };
 
 test('issue #10: modern default sshd without PermitRootLogin is not root password login', () => {
