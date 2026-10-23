@@ -113,6 +113,14 @@ lvmthin: local-lvm
 \tcontent rootdir,images`,
   },
   {
+    key: 'pveproxy',
+    label: 'pveproxy',
+    placeholder: `# /etc/default/pveproxy
+ALLOW_FROM="192.0.2.0/24"
+DENY_FROM="all"
+POLICY="allow"`,
+  },
+  {
     key: 'tfa.json',
     label: 'tfa.json',
     placeholder: `# 2FA status for every user (metadata only, no secrets).
@@ -150,6 +158,13 @@ function detectConfigType(filename: string, content: string): ConfigFileType | n
   // JSON from `pveum user tfa list --output-format json`; the raw secret store is never detected
   if (/^\s*[[{]/.test(content) && parseTfaList(content) !== undefined) {
     return 'tfa.json';
+  }
+
+  if (
+    lowerName.includes('pveproxy') ||
+    /^\s*(ALLOW_FROM|DENY_FROM|POLICY|LISTEN_IP)\s*=/m.test(content)
+  ) {
+    return 'pveproxy';
   }
 
   if (

@@ -1,0 +1,6 @@
+# Mixed quoting and inline comments
+ALLOW_FROM=192.0.2.0/24,198.51.100.10 # mgmt and jump host
+DENY_FROM='all'  # everything else
+POLICY="deny" # explicit default deny
+  LISTEN_IP=   # left empty on purpose
+CIPHERS="ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"

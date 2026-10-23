@@ -108,6 +108,9 @@ function categoriesFromInputFiles(inputFiles: ConfigFileType[]): AuditCategory[]
       case 'storage.cfg':
         assessed.add('storage');
         break;
+      case 'pveproxy':
+        assessed.add('api');
+        break;
       case 'tfa.json':
         assessed.add('auth');
         break;
@@ -143,7 +146,8 @@ export function generateAuditReport(
   const assessedSet = new Set(assessedCategories);
   const suppliedSet = new Set(inputFiles);
 
-  // Evaluate only rules whose category has a supplied source
+  // Evaluate only rules whose category has a supplied source, and skip rules
+  // whose own required input file was not supplied
   const allFindings: Finding[] = rules
     .filter((rule) => assessedSet.has(rule.category))
     .filter((rule) => !rule.requiresInput || suppliedSet.has(rule.requiresInput))

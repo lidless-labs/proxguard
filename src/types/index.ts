@@ -22,6 +22,7 @@ export type ConfigFileType =
   | 'iptables'
   | 'lxc.conf'
   | 'storage.cfg'
+  | 'pveproxy'
   | 'tfa.json';
 
 // ─── Parsed Configuration Sub-Types ────────────────────────────────────────
@@ -183,6 +184,16 @@ export interface ParsedIptables {
   chains: IptablesChain[];
 }
 
+/** Parsed /etc/default/pveproxy (host based access control for the web UI and API) */
+export interface ParsedPveproxy {
+  allowFrom: string | null;
+  denyFrom: string | null;
+  policy: string | null;
+  listenIp: string | null;
+  ciphers: string | null;
+  rawDirectives: Record<string, string>;
+}
+
 /** One second-factor entry (no secret material) */
 export interface TfaEntry {
   /** totp, u2f, webauthn, recovery or yubico (lowercased) */
@@ -217,6 +228,7 @@ export interface ParsedConfig {
   api?: ParsedAPI;
   storage?: ParsedStorage;
   iptables?: ParsedIptables;
+  pveproxy?: ParsedPveproxy;
   tfa?: ParsedTfa;
   raw: Record<ConfigFileType, string>;
 }

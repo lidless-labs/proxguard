@@ -37,6 +37,7 @@ const RULE_CASES: RuleCase[] = [
   { id: 'cifs-world-readable', category: 'storage', severity: 'medium', file: 'storage.cfg' },
   { id: 'admin-api-tokens', category: 'api', severity: 'high', file: 'user.cfg' },
   { id: 'no-token-expiry', category: 'api', severity: 'medium', file: 'user.cfg' },
+  { id: 'pveproxy-unrestricted', category: 'api', severity: 'medium', file: 'pveproxy' },
 ];
 
 const fixturesDir = join(__dirname, '../../tests/fixtures');
