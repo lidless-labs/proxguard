@@ -1,0 +1,11 @@
+[
+  {
+    "userid": "root@pam",
+    "entries": [
+      {
+        "type": "totp",
+        "enable": true
+      }
+    ]
+  }
+]

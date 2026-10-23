@@ -21,7 +21,8 @@ export type ConfigFileType =
   | 'cluster.fw'
   | 'iptables'
   | 'lxc.conf'
-  | 'storage.cfg';
+  | 'storage.cfg'
+  | 'tfa.json';
 
 // ─── Parsed Configuration Sub-Types ────────────────────────────────────────
 
@@ -182,6 +183,29 @@ export interface ParsedIptables {
   chains: IptablesChain[];
 }
 
+/** One second-factor entry (no secret material) */
+export interface TfaEntry {
+  /** totp, u2f, webauthn, recovery or yubico (lowercased) */
+  type: string;
+  id?: string;
+  description?: string;
+  /** False when the entry is disabled; entries default to enabled */
+  enable: boolean;
+}
+
+/** Second-factor entries for one user */
+export interface TfaUser {
+  userid: string;
+  entries: TfaEntry[];
+  totpLocked?: boolean;
+  tfaLockedUntil?: number;
+}
+
+/** Parsed `pveum user tfa list --output-format json` output */
+export interface ParsedTfa {
+  users: TfaUser[];
+}
+
 // ─── Top-Level Parsed Config ───────────────────────────────────────────────
 
 /** Aggregated parsed configuration from all input files */
@@ -193,6 +217,7 @@ export interface ParsedConfig {
   api?: ParsedAPI;
   storage?: ParsedStorage;
   iptables?: ParsedIptables;
+  tfa?: ParsedTfa;
   raw: Record<ConfigFileType, string>;
 }
 
@@ -203,6 +228,8 @@ export interface RuleResult {
   passed: boolean;
   evidence: string;
   details?: string;
+  /** True when the rule could not be evaluated from the supplied input; scoring ignores it */
+  skipped?: boolean;
 }
 
 /** A security rule definition */
@@ -216,6 +243,8 @@ export interface SecurityRule {
   remediation: string;
   remediationScript: string;
   cisBenchmark?: string;
+  /** Skip this rule when its source file was not supplied. */
+  requiresInput?: ConfigFileType;
 }
 
 /** A finding is a rule paired with its evaluation result */

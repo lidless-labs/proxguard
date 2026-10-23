@@ -55,9 +55,6 @@ acl:1:/:readonly@pve:PVEAuditor:
 
 token:admin@pve:terraform:0:1:Terraform provisioning:
 token:devops@pve:ansible:0:1:Ansible automation:
-
-tfa:admin@pve:totp:
-tfa:operator@pve:totp:
 `,
 
   'cluster.fw': `# Proxmox VE Cluster Firewall Configuration
@@ -161,5 +158,49 @@ cifs: smb-templates
 	username pvebackup
 	options file_mode=0640,dir_mode=0750
 	domain CORP
+`,
+
+  // pveum user tfa list --output-format json
+  'tfa.json': `[
+  {
+    "userid": "admin@pve",
+    "entries": [
+      {
+        "id": "totp/8d02e1",
+        "type": "totp",
+        "description": "Authenticator app",
+        "enable": true
+      },
+      {
+        "id": "recovery",
+        "type": "recovery",
+        "description": "Recovery keys",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "operator@pve",
+    "entries": [
+      {
+        "id": "totp/41ab7c",
+        "type": "totp",
+        "description": "Authenticator app",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "readonly@pve",
+    "entries": [
+      {
+        "id": "recovery",
+        "type": "recovery",
+        "description": "Recovery keys",
+        "enable": true
+      }
+    ]
+  }
+]
 `,
 };

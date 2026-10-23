@@ -1,8 +1,13 @@
 /**
  * Authentication & Authorization Security Rules
- * Evaluates user.cfg for 2FA, token management, and role permissions.
+ * Evaluates user.cfg for token management and role permissions, and
+ * `pveum user tfa list` output for 2FA.
  */
-import type { SecurityRule } from '../types';
+import type { PVEUser, SecurityRule } from '../types';
+import { hasRealSecondFactor } from '../parsers/tfa';
+
+/** Secret-free source for 2FA state (the CLI form of GET /access/tfa) */
+const TFA_LIST_COMMAND = 'pveum user tfa list --output-format json';
 
 export const authRules: SecurityRule[] = [
   {
@@ -16,26 +21,51 @@ export const authRules: SecurityRule[] = [
     test: (config) => {
       const auth = config.auth;
       if (!auth || auth.users.length === 0) {
+        if (config.tfa) {
+          return {
+            passed: true,
+            skipped: true,
+            evidence: 'Not evaluated: 2FA data supplied without user.cfg, so the user list is unknown',
+          };
+        }
         return { passed: true, evidence: 'No user config provided' };
       }
+
+      // Proxmox VE keeps second factors in priv/tfa.cfg, so user.cfg alone cannot answer this
+      const tfa = config.tfa;
+      if (!tfa) {
+        return {
+          passed: true,
+          skipped: true,
+          evidence: `Not evaluated: no 2FA data supplied. Add the output of ${TFA_LIST_COMMAND} on the tfa.json tab.`,
+          details:
+            'Proxmox VE stores second factors outside user.cfg, so user.cfg alone cannot show which users have 2FA.',
+        };
+      }
+
+      const tfaByUser = new Map(tfa.users.map(u => [u.userid, u]));
+      // Legacy x!-prefixed keys in user.cfg also mark an enrolled second factor
+      const has2FA = (user: PVEUser) =>
+        hasRealSecondFactor(tfaByUser.get(user.userid)) || Boolean(user.tfa);
 
       // Filter to enabled, non-system users
       const activeUsers = auth.users.filter(
         u => u.enable !== false && u.userid !== 'root@pam'
       );
-      const usersWithout2FA = activeUsers.filter(u => !u.tfa);
+      const usersWithout2FA = activeUsers.filter(u => !has2FA(u));
 
       if (usersWithout2FA.length > 0) {
         return {
           passed: false,
           evidence: `${usersWithout2FA.length}/${activeUsers.length} active users lack 2FA: ${usersWithout2FA.map(u => u.userid).join(', ')}`,
-          details: 'These accounts can be accessed with just a password.',
+          details:
+            'These accounts can be accessed with just a password. Recovery keys and disabled entries do not count as a second factor.',
         };
       }
 
       // Also check if root@pam has 2FA
       const root = auth.users.find(u => u.userid === 'root@pam');
-      if (root && !root.tfa) {
+      if (root && !has2FA(root)) {
         return {
           passed: false,
           evidence: 'root@pam does not have 2FA configured',
@@ -49,14 +79,16 @@ export const authRules: SecurityRule[] = [
       };
     },
     remediation:
-      'Configure TOTP or WebAuthn 2FA for all users via Datacenter → Permissions → Two Factor in the Proxmox web UI.',
-    remediationScript: `# Enable TOTP for a user (must be done per-user in the web UI or via API)
-# pveum user tfa setup totp <userid> --description "TOTP 2FA"
-echo "2FA must be configured individually per user in the Proxmox web UI"`,
+      `List enrolled factors with ${TFA_LIST_COMMAND}, then add TOTP or WebAuthn for each user missing one under Datacenter → Permissions → Two Factor in the Proxmox web UI. Recovery keys alone are not a second factor.`,
+    remediationScript: `# Show which users have a second factor (metadata only, no secrets)
+${TFA_LIST_COMMAND}
+# Second factors are added per user in the web UI: Datacenter → Permissions → Two Factor
+echo "Add TOTP or WebAuthn for each user listed without one"`,
   },
 
   {
     id: 'root-api-tokens',
+    requiresInput: 'user.cfg',
     category: 'auth',
     severity: 'high',
     title: 'Root Account Has API Tokens',
@@ -95,6 +127,7 @@ pveum user token list root@pam
 
   {
     id: 'overpermissive-roles',
+    requiresInput: 'user.cfg',
     category: 'auth',
     severity: 'medium',
     title: 'Users with Administrator Role',

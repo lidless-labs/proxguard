@@ -1,0 +1,20 @@
+[
+  {
+    "userid": "root@pam",
+    "entries": [
+      {
+        "type": "totp",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "admin@pve",
+    "entries": [
+      {
+        "type": "totp",
+        "enable": true
+      }
+    ]
+  }
+]

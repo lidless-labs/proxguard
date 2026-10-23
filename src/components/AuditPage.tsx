@@ -18,6 +18,7 @@ import {
 import { useAuditStore } from '../store/auditStore';
 import { useTheme } from '../variants/ThemeProvider';
 import type { ConfigFileType, AuditCategory } from '../types';
+import { parseTfaList } from '../parsers/tfa';
 import { AnimatedGauge } from './AnimatedGauge';
 import { CategoryRadar } from './CategoryRadar';
 import { CategoryCard } from './CategoryCard';
@@ -111,6 +112,21 @@ lvmthin: local-lvm
 \tvgname pve
 \tcontent rootdir,images`,
   },
+  {
+    key: 'tfa.json',
+    label: 'tfa.json',
+    placeholder: `# 2FA status for every user (metadata only, no secrets).
+# Run on any cluster node and paste the JSON it prints:
+#   pveum user tfa list --output-format json
+[
+  {
+    "userid": "admin@pve",
+    "entries": [
+      { "id": "totp/1", "type": "totp", "description": "phone", "enable": true }
+    ]
+  }
+]`,
+  },
 ];
 
 // ─── Severity sort order ────────────────────────────────────────────────────
@@ -130,6 +146,11 @@ const CATEGORY_LABELS: Record<AuditCategory, string> = {
 function detectConfigType(filename: string, content: string): ConfigFileType | null {
   const lowerName = filename.toLowerCase();
   const lowerContent = content.toLowerCase();
+
+  // JSON from `pveum user tfa list --output-format json`; the raw secret store is never detected
+  if (/^\s*[[{]/.test(content) && parseTfaList(content) !== undefined) {
+    return 'tfa.json';
+  }
 
   if (
     lowerName.includes('sshd') ||
