@@ -243,7 +243,7 @@ proxguard/
 
 ProxGuard includes three demo configurations so you can see the audit engine without a Proxmox cluster:
 
-- **Insecure** - Root SSH with password, firewall disabled, no 2FA. Fails all 16 rules and grades F.
+- **Insecure** - Root SSH with password, firewall disabled, no 2FA. Fails all 17 rules and grades F.
 - **Partial** - Some hardening but gaps. Grades C.
 - **Hardened** - Best practices applied. Passes every rule and grades A.
 
