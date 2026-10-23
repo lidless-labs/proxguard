@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
     "test": "node tests/run-tests.mjs",
+    "check:docs": "node scripts/check-docs.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
