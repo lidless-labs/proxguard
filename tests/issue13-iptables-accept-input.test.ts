@@ -18,6 +18,7 @@ function makeInputs(iptables: string): Record<ConfigFileType, string> {
     'lxc.conf': '',
     'storage.cfg': '',
     'pveproxy': '',
+    'tfa.json': '',
   };
 }
 

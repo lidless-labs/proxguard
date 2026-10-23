@@ -52,6 +52,8 @@ export function calculateCategoryScore(
   let score = 100;
 
   for (const finding of findings) {
+    // Rules that could not be evaluated from the supplied input carry no deduction
+    if (finding.result.skipped) continue;
     if (!finding.result.passed) {
       score -= SEVERITY_DEDUCTIONS[finding.rule.severity];
     }
@@ -109,6 +111,9 @@ function categoriesFromInputFiles(inputFiles: ConfigFileType[]): AuditCategory[]
       case 'pveproxy':
         assessed.add('api');
         break;
+      case 'tfa.json':
+        assessed.add('auth');
+        break;
     }
   }
 
@@ -128,7 +133,9 @@ export function generateAuditReport(
     Object.entries(parsedConfig.raw) as [ConfigFileType, string][]
   )
     .filter(([, value]) => value.trim().length > 0)
-    .map(([key]) => key);
+    .map(([key]) => key)
+    // Malformed TFA JSON parses to undefined and counts as not supplied
+    .filter((key) => key !== 'tfa.json' || parsedConfig.tfa !== undefined);
 
   // Entirely empty / whitespace-only input is unassessed — not a scored report
   if (inputFiles.length === 0) {
@@ -162,9 +169,9 @@ export function generateAuditReport(
   }
 
   // Score only assessed categories — missing sources do not contribute
-  const categories: CategoryScore[] = assessedCategories.map((cat) =>
-    calculateCategoryScore(cat, categoryFindings.get(cat) ?? [])
-  );
+  const categories: CategoryScore[] = assessedCategories
+    .filter((cat) => categoryFindings.get(cat)?.some((f) => !f.result.skipped))
+    .map((cat) => calculateCategoryScore(cat, categoryFindings.get(cat) ?? []));
 
   // Calculate overall score and grade from assessed categories only
   const overallScore = calculateOverallScore(categories);

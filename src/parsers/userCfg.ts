@@ -45,9 +45,9 @@ export function parseUserConfig(input: string): ParsedAuth {
             comment: parts[7] || undefined,
           };
 
-          // Check for TFA in keys field or separate tfa: line
-          // In PVE 8.x, TFA is in separate tfa: lines, but some older formats
-          // store it in the keys field (index 8)
+          // Legacy OTP keys: older PVE releases stored x!-prefixed keys in field 8.
+          // Current PVE keeps second factors in priv/tfa.cfg, outside user.cfg, so
+          // the no-2fa-users rule relies on `pveum user tfa list` output instead.
           if (parts[8] && parts[8].startsWith('x!')) {
             user.tfa = parts[8];
           }

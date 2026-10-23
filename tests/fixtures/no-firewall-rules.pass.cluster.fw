@@ -1,0 +1,8 @@
+[OPTIONS]
+
+enable: 1
+policy_in: DROP
+
+[RULES]
+
+IN ACCEPT -p tcp -dport 8006

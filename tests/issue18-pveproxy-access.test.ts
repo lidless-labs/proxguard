@@ -33,6 +33,7 @@ function inputs(overrides: Partial<Record<ConfigFileType, string>>): Record<Conf
     'lxc.conf': '',
     'storage.cfg': '',
     'pveproxy': '',
+    'tfa.json': '',
     ...overrides,
   };
 }
@@ -98,6 +99,8 @@ test('a pveproxy-only audit assesses the api category', () => {
   assert.ok(report);
   assert.deepEqual(report.inputFiles, ['pveproxy']);
   assert.deepEqual(report.categories.map((c) => c.category), ['api']);
+  assert.deepEqual(report.findings.map((f) => f.rule.id), [RULE_ID]);
+  assert.equal(report.overallScore, 90);
 
   const finding = report.findings.find((f) => f.rule.id === RULE_ID);
   assert.ok(finding, 'rule must be evaluated when pveproxy is supplied');
@@ -187,4 +190,17 @@ test('demo samples exercise the rule', () => {
     assert.ok(finding, `${type} sample must evaluate ${RULE_ID}`);
     assert.equal(finding.result.passed, passed, `${type}: ${finding.result.evidence}`);
   }
+});
+
+
+test('TFA plus pveproxy input preserves skipped auth without inventing user token passes', () => {
+  const report = generateAuditReport(parseAllConfigs({
+    'tfa.json': '[]',
+    pveproxy: readFixture('issue18-comments-only.pveproxy'),
+  }), allRules);
+  assert.ok(report);
+  assert.deepEqual(report.categories.map((c) => [c.category, c.score]), [['api', 90]]);
+  assert.deepEqual(report.findings.map((f) => f.rule.id).sort(), ['no-2fa-users', RULE_ID]);
+  assert.equal(report.findings.find((f) => f.rule.id === 'no-2fa-users')?.result.skipped, true);
+  assert.equal(report.overallScore, 90);
 });

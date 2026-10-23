@@ -160,4 +160,31 @@ cifs: smb-archive
 #DENY_FROM="all"
 #POLICY="allow"
 `,
+
+  // pveum user tfa list --output-format json
+  'tfa.json': `[
+  {
+    "userid": "admin@pve",
+    "entries": [
+      {
+        "id": "recovery",
+        "type": "recovery",
+        "description": "Recovery keys",
+        "enable": true
+      }
+    ]
+  },
+  {
+    "userid": "operator@pve",
+    "entries": [
+      {
+        "id": "totp/2f1c9a",
+        "type": "totp",
+        "description": "Old phone",
+        "enable": false
+      }
+    ]
+  }
+]
+`,
 };

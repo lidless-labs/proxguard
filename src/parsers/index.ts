@@ -10,6 +10,7 @@ import { parseIptables } from './iptables';
 import { parseLXCConfig } from './lxc';
 import { parseStorageConfig } from './storage';
 import { parsePveproxyConfig } from './pveproxy';
+import { parseTfaList } from './tfa';
 
 /** True when the caller supplied non-empty content for this file type. */
 function isSupplied(
@@ -33,6 +34,7 @@ export function parseAllConfigs(inputs: Partial<Record<ConfigFileType, string>>)
     'lxc.conf': inputs['lxc.conf'] ?? '',
     'storage.cfg': inputs['storage.cfg'] ?? '',
     'pveproxy': inputs['pveproxy'] ?? '',
+    'tfa.json': inputs['tfa.json'] ?? '',
   };
 
   // Parse only supplied configs — omit truthy empty objects for missing sources
@@ -47,6 +49,8 @@ export function parseAllConfigs(inputs: Partial<Record<ConfigFileType, string>>)
     ? parseStorageConfig(raw['storage.cfg'])
     : undefined;
   const pveproxy = isSupplied(inputs, 'pveproxy') ? parsePveproxyConfig(raw['pveproxy']) : undefined;
+  // Empty or malformed TFA JSON parses to undefined and counts as not supplied
+  const tfa = isSupplied(inputs, 'tfa.json') ? parseTfaList(raw['tfa.json']) : undefined;
 
   // Derive API config from auth tokens + relevant ACLs (only when user.cfg was supplied)
   const api: ParsedAPI | undefined = auth
@@ -68,6 +72,7 @@ export function parseAllConfigs(inputs: Partial<Record<ConfigFileType, string>>)
     storage,
     iptables,
     pveproxy,
+    tfa,
     raw,
   };
 }
@@ -79,3 +84,4 @@ export { parseIptables } from './iptables';
 export { parseLXCConfig } from './lxc';
 export { parseStorageConfig } from './storage';
 export { parsePveproxyConfig } from './pveproxy';
+export { parseTfaList, hasRealSecondFactor } from './tfa';
