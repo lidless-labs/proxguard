@@ -243,6 +243,8 @@ export interface SecurityRule {
   remediation: string;
   remediationScript: string;
   cisBenchmark?: string;
+  /** Skip this rule when its source file was not supplied. */
+  requiresInput?: ConfigFileType;
 }
 
 /** A finding is a rule paired with its evaluation result */

@@ -48,7 +48,12 @@ function fixtureName(ruleCase: RuleCase, outcome: 'pass' | 'fail'): string {
 function runRule(ruleCase: RuleCase, outcome: 'pass' | 'fail') {
   const rule = getRuleById(ruleCase.id);
   assert.ok(rule, `rule ${ruleCase.id} must exist in allRules`);
-  const config = parseAllConfigs({ [ruleCase.file]: readFixture(fixtureName(ruleCase, outcome)) });
+  const config = parseAllConfigs({
+    [ruleCase.file]: readFixture(fixtureName(ruleCase, outcome)),
+    ...(ruleCase.id === 'no-2fa-users'
+      ? { 'tfa.json': readFixture(`no-2fa-users.${outcome}.tfa.json`) }
+      : {}),
+  });
   return rule.test(config);
 }
 
@@ -89,5 +94,6 @@ for (const ruleCase of RULE_CASES) {
   test(`${ruleCase.id}: passes on ${fixtureName(ruleCase, 'pass')}`, () => {
     const result = runRule(ruleCase, 'pass');
     assert.equal(result.passed, true, `expected pass, evidence: ${result.evidence}`);
+    assert.notEqual(result.skipped, true, 'a passing fixture must actually evaluate the rule');
   });
 }

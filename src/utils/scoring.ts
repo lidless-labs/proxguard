@@ -141,10 +141,12 @@ export function generateAuditReport(
 
   const assessedCategories = categoriesFromInputFiles(inputFiles);
   const assessedSet = new Set(assessedCategories);
+  const suppliedSet = new Set(inputFiles);
 
   // Evaluate only rules whose category has a supplied source
   const allFindings: Finding[] = rules
     .filter((rule) => assessedSet.has(rule.category))
+    .filter((rule) => !rule.requiresInput || suppliedSet.has(rule.requiresInput))
     .map((rule) => ({
       rule,
       result: rule.test(parsedConfig),
@@ -163,9 +165,9 @@ export function generateAuditReport(
   }
 
   // Score only assessed categories — missing sources do not contribute
-  const categories: CategoryScore[] = assessedCategories.map((cat) =>
-    calculateCategoryScore(cat, categoryFindings.get(cat) ?? [])
-  );
+  const categories: CategoryScore[] = assessedCategories
+    .filter((cat) => categoryFindings.get(cat)?.some((f) => !f.result.skipped))
+    .map((cat) => calculateCategoryScore(cat, categoryFindings.get(cat) ?? []));
 
   // Calculate overall score and grade from assessed categories only
   const overallScore = calculateOverallScore(categories);

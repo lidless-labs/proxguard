@@ -88,6 +88,7 @@ echo "Add TOTP or WebAuthn for each user listed without one"`,
 
   {
     id: 'root-api-tokens',
+    requiresInput: 'user.cfg',
     category: 'auth',
     severity: 'high',
     title: 'Root Account Has API Tokens',
@@ -126,6 +127,7 @@ pveum user token list root@pam
 
   {
     id: 'overpermissive-roles',
+    requiresInput: 'user.cfg',
     category: 'auth',
     severity: 'medium',
     title: 'Users with Administrator Role',

@@ -7,6 +7,7 @@ import type { SecurityRule } from '../types';
 export const apiRules: SecurityRule[] = [
   {
     id: 'admin-api-tokens',
+    requiresInput: 'user.cfg',
     category: 'api',
     severity: 'high',
     title: 'API Tokens with Full Admin Privileges',
@@ -59,6 +60,7 @@ pveum acl modify <path> --tokens <userid>!<tokenid> --roles PVEAuditor`,
 
   {
     id: 'no-token-expiry',
+    requiresInput: 'user.cfg',
     category: 'api',
     severity: 'medium',
     title: 'API Tokens Without Expiration',

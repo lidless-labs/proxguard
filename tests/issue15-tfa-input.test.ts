@@ -153,6 +153,19 @@ test('issue #15: TFA input without user.cfg is skipped, since the user list is u
   assert.ok(report);
   assert.deepEqual(report.inputFiles, ['tfa.json']);
   assert.equal(no2faFinding(report.findings).result.skipped, true);
+  assert.deepEqual(report.findings.map((f) => f.rule.id), ['no-2fa-users']);
+  assert.deepEqual(report.categories, [], 'unknown users must not earn an auth score');
+  assert.equal(report.overallScore, 0);
+});
+
+test('issue #15: skipped TFA-only auth does not inflate another category score', () => {
+  const report = generateAuditReport(parseAllConfigs({
+    'tfa.json': TFA_TWO_USERS,
+    'storage.cfg': readFixture('nfs-no-root-squash.fail.storage.cfg'),
+  }), allRules);
+  assert.ok(report);
+  assert.deepEqual(report.categories.map((c) => c.category), ['storage']);
+  assert.equal(report.overallScore, 75);
 });
 
 test('issue #15: calculateCategoryScore ignores skipped results even when marked failed', () => {
